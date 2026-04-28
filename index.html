@@ -1,0 +1,1596 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OrthoX — Análise Radiológica</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@300;400;500;600&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --red:      #C0392B;
+  --red-mid:  #D03020;
+  --orange:   #E67E22;
+  --red-glow: rgba(192,57,43,0.08);
+  --bg:       #FFFFFF;
+  --surface:  #F7F7F7;
+  --surface2: #F0F0F0;
+  --border:   #E5E5E5;
+  --border-hi:#CCCCCC;
+  --text:     #111111;
+  --text-2:   #555555;
+  --text-3:   #999999;
+  --radius:   8px;
+  --radius-sm:5px;
+  --warning-bg: #FEF3C7;
+  --warning-border: #F59E0B;
+  --warning-text: #92400E;
+  --success-bg: #F0FDF4;
+  --success-border: #86EFAC;
+  --success-text: #166534;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center}
+
+/* TOPBAR */
+.topbar{width:100%;background:#fff;border-bottom:1px solid var(--border);padding:0 40px;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.logo-svg{height:38px;width:auto}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.badge{font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;padding:4px 10px;border-radius:3px}
+.badge-atria{color:#888;border:1px solid #DDD}
+.badge-mvp{color:var(--orange);border:1px solid rgba(230,126,34,.35);background:rgba(230,126,34,.06);font-family:'DM Mono',monospace;font-size:9px}
+
+/* TABS */
+.tabs-bar{width:100%;max-width:860px;display:flex;margin-top:32px;border-bottom:2px solid var(--border);padding-left:2px}
+.tab-btn{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:10px 28px;border:none;background:none;color:var(--text-3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:color .2s,border-color .2s;display:flex;align-items:center;gap:8px}
+.tab-btn:hover{color:var(--text-2)}
+.tab-btn.active{color:var(--red-mid);border-bottom-color:var(--red-mid)}
+.tab-notif{background:var(--red-mid);color:#fff;font-family:'DM Mono',monospace;font-size:9px;width:18px;height:18px;border-radius:50%;display:none;align-items:center;justify-content:center}
+.tab-notif.show{display:flex}
+
+/* PANELS */
+main{width:100%;max-width:860px;padding:32px 24px 80px}
+.panel{display:none;animation:fadeUp .3s ease both}
+.panel.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* SECTION LABEL */
+.section-label{font-family:'DM Mono',monospace;font-size:9px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--red-mid);margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:26px 30px;margin-bottom:16px;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:linear-gradient(to bottom,var(--red),var(--orange))}
+
+/* READOUT */
+.readout{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:20px}
+.readout-cell{padding:13px 16px;border-right:1px solid var(--border)}
+.readout-cell:last-child{border-right:none}
+.readout-key{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.12em;color:var(--text-3);text-transform:uppercase;margin-bottom:5px}
+.readout-val{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;color:var(--text);line-height:1.1}
+.readout-val.accent{color:var(--red-mid)}
+
+/* FORM */
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px 18px;margin-bottom:13px}
+.field-grid.cols-3{grid-template-columns:1fr 1fr 1fr}
+.field{display:flex;flex-direction:column;gap:5px}
+label{font-family:'DM Mono',monospace;font-size:9px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--text-3)}
+input[type="text"],input[type="date"],select,textarea{background:#fff;border:1px solid var(--border-hi);border-radius:var(--radius-sm);padding:9px 13px;color:var(--text);font-family:'Barlow',sans-serif;font-size:14px;outline:none;transition:border-color .2s,box-shadow .2s;width:100%;-webkit-appearance:none; resize: vertical;}
+input:focus,select:focus,textarea:focus{border-color:var(--red-mid);box-shadow:0 0 0 3px var(--red-glow)}
+select option{background:#fff;color:var(--text)}
+.os-field input{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;color:var(--red-mid)}
+
+/* UPLOAD */
+.upload-zone{border:1.5px dashed var(--border-hi);border-radius:var(--radius);padding:44px 32px;text-align:center;cursor:pointer;position:relative;background:#FAFAFA;transition:border-color .25s,background .25s}
+.upload-zone:hover,.upload-zone.dragover{border-color:var(--red-mid);background:var(--red-glow)}
+.upload-zone input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-icon{width:44px;height:44px;margin:0 auto 14px;border:1.5px solid var(--border-hi);border-radius:50%;display:flex;align-items:center;justify-content:center;transition:border-color .25s}
+.upload-zone:hover .upload-icon{border-color:var(--red-mid)}
+.upload-icon svg{width:18px;height:18px;stroke:var(--text-3)}
+.upload-zone:hover .upload-icon svg{stroke:var(--red-mid)}
+.upload-title{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:600;color:var(--text-2);margin-bottom:6px}
+.upload-hint{font-family:'DM Mono',monospace;font-size:10px;color:var(--text-3);letter-spacing:.05em}
+.preview-wrap{display:none;margin-top:14px;border-radius:var(--radius-sm);overflow:hidden;border:1px solid var(--border-hi);position:relative}
+.preview-wrap img{width:100%;max-height:200px;object-fit:cover;display:block}
+.preview-overlay{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.7));padding:20px 14px 10px;display:flex;align-items:flex-end;justify-content:space-between}
+.preview-name{font-family:'DM Mono',monospace;font-size:10px;color:#ccc}
+.preview-badge-img{font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--orange);border:1px solid var(--orange);padding:2px 7px;border-radius:3px}
+
+/* SUBMIT */
+.btn-submit{width:100%;padding:17px 24px;background:linear-gradient(90deg,var(--red) 0%,var(--red-mid) 50%,var(--orange) 100%);border:none;border-radius:var(--radius-sm);color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;margin-top:18px;transition:opacity .2s,transform .15s,box-shadow .2s;position:relative;overflow:hidden}
+.btn-submit::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent);transform:translateX(-100%);transition:transform .4s ease}
+.btn-submit:hover:not(:disabled)::after{transform:translateX(100%)}
+.btn-submit:hover:not(:disabled){box-shadow:0 6px 24px rgba(192,57,43,.35);transform:translateY(-1px)}
+.btn-submit:disabled{opacity:.3;cursor:not-allowed;transform:none}
+
+/* TOAST */
+.toast{margin-top:16px;padding:16px 20px;background:#f0faf4;border:1px solid #86efac;border-radius:var(--radius-sm);display:none;align-items:center;gap:12px}
+.toast.show{display:flex;animation:fadeUp .3s ease both}
+.toast-icon{font-size:20px;flex-shrink:0}
+.toast-text{font-size:14px;color:#166534}
+.toast-text strong{font-weight:600;display:block;margin-bottom:2px}
+.error-bar{display:none;margin-top:12px;padding:12px 16px;background:rgba(192,57,43,.06);border:1px solid rgba(192,57,43,.25);border-radius:var(--radius-sm);font-family:'DM Mono',monospace;font-size:11px;color:var(--red-mid)}
+
+/* LAUDOS PANEL */
+.laudos-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.laudos-status{display:flex;align-items:center;gap:8px;font-family:'DM Mono',monospace;font-size:10px;color:var(--text-3);letter-spacing:.08em;margin-top:4px}
+.poll-dot{width:7px;height:7px;border-radius:50%;background:#4ade80;flex-shrink:0;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.poll-dot.off{animation:none;background:var(--border-hi)}
+.btn-refresh{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:8px 18px;border:1px solid var(--border-hi);border-radius:var(--radius-sm);background:#fff;color:var(--text-2);cursor:pointer;transition:border-color .2s,color .2s}
+.btn-refresh:hover{border-color:var(--red-mid);color:var(--red-mid)}
+
+/* LAUDO ROW */
+.laudos-list{display:flex;flex-direction:column;gap:10px}
+.laudo-row{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 22px;display:grid;grid-template-columns:1fr auto;align-items:center;gap:16px;animation:fadeUp .35s ease both;position:relative;overflow:hidden}
+.laudo-row::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:linear-gradient(to bottom,var(--red),var(--orange))}
+.laudo-info{padding-left:4px}
+.laudo-paciente{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;color:var(--text);margin-bottom:5px}
+.laudo-meta{display:flex;gap:16px;flex-wrap:wrap}
+.laudo-chip{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.07em;color:var(--text-3);display:flex;align-items:center;gap:4px}
+.laudo-chip span{color:var(--text-2)}
+.laudo-new{position:absolute;top:10px;right:10px;font-family:'DM Mono',monospace;font-size:9px;background:var(--red-mid);color:#fff;padding:2px 7px;border-radius:3px;letter-spacing:.06em}
+.btn-download{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:10px 18px;background:linear-gradient(90deg,var(--red),var(--orange));border:none;border-radius:var(--radius-sm);color:#fff;cursor:pointer;transition:box-shadow .2s,transform .15s;white-space:nowrap;text-decoration:none;display:inline-block}
+.btn-download:hover{box-shadow:0 4px 16px rgba(192,57,43,.3);transform:translateY(-1px)}
+.btn-download-disabled{opacity:.35;cursor:default;pointer-events:none}
+
+/* EMPTY STATE */
+.empty-state{text-align:center;padding:72px 32px;border:1.5px dashed var(--border);border-radius:var(--radius)}
+.empty-icon{font-size:40px;margin-bottom:14px;opacity:.35}
+.empty-title{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;color:var(--text-2);margin-bottom:6px}
+.empty-sub{font-family:'DM Mono',monospace;font-size:10px;color:var(--text-3);letter-spacing:.07em}
+
+/* SKELETON */
+.skeleton{background:linear-gradient(90deg,var(--surface) 25%,var(--surface2) 50%,var(--surface) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:4px}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.skeleton-row{display:none;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px;margin-bottom:10px}
+.skeleton-row.show{display:block}
+
+/* COUNTDOWN */
+.countdown{font-family:'DM Mono',monospace;font-size:10px;color:var(--text-3);letter-spacing:.06em}
+
+/* VALIDAÇÃO PANEL */
+.val-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.val-list{display:flex;flex-direction:column;gap:14px}
+.val-row{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:0;position:relative;overflow:hidden;animation:fadeUp .35s ease both}
+.val-row::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:linear-gradient(to bottom,var(--warning-border),var(--orange))}
+.val-row-header{padding:16px 22px 14px 26px;display:grid;grid-template-columns:1fr auto;align-items:start;gap:16px}
+.val-paciente{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px}
+.val-meta{display:flex;gap:14px;flex-wrap:wrap}
+.val-chip{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.07em;color:var(--text-3);display:flex;align-items:center;gap:4px}
+.val-chip span{color:var(--text-2)}
+.val-alert{margin:0 22px 0 26px;padding:12px 16px;background:var(--warning-bg);border:1px solid var(--warning-border);border-radius:var(--radius-sm);font-size:13px;color:var(--warning-text);line-height:1.5}
+.val-alert strong{display:block;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}
+.val-alert-text{font-family:'Barlow',sans-serif}
+.val-edit-area{margin:12px 22px 0 26px;display:none}
+.val-edit-area.open{display:block;animation:fadeUp .2s ease both}
+.val-edit-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-3);margin-bottom:10px}
+
+/* EDITOR AREA BOX & ODONTOGRAMA */
+.editor-box { background:#fff; border:1px solid var(--border); border-radius:var(--radius); padding:18px; }
+.editor-hint { font-size:12px; color:var(--text-3); margin-top:2px; margin-bottom: 8px;}
+.odontograma-wrap{background:var(--surface);border:1.5px solid var(--border-hi);border-radius:var(--radius);padding:16px 18px; margin-bottom: 16px;}
+.odonto-instrucao{font-size:13px;color:var(--text-2);margin-bottom:14px;line-height:1.5}
+.odonto-instrucao strong{color:var(--text)}
+.odonto-arcada{margin-bottom:14px}
+.odonto-arcada-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);margin-bottom:8px}
+.odonto-row{display:flex;gap:4px;flex-wrap:wrap}
+.dente-btn{width:44px;height:44px;border-radius:6px;border:1.5px solid var(--border-hi);background:#fff;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;transition:all .15s;position:relative;flex-shrink:0}
+.dente-btn:hover{border-color:var(--warning-border);background:var(--warning-bg)}
+.dente-num{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;color:var(--text-2);line-height:1}
+.dente-ico{font-size:14px;line-height:1}
+.dente-btn.ausente{background:#FEF3C7;border-color:var(--warning-border);border-width:2px}
+.dente-btn.ausente .dente-num{color:var(--warning-text);font-weight:700}
+.dente-btn.ausente::after{content:"✕";position:absolute;top:-5px;right:-5px;background:var(--warning-border);color:#fff;font-size:9px;width:14px;height:14px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;line-height:14px;text-align:center}
+.dente-btn.ja-confirmado{background:#e8f5e9;border-color:#4CAF50;border-width:2px;cursor:default}
+.dente-btn.ja-confirmado .dente-num{color:#2e7d32;font-weight:700}
+.dente-btn.ja-confirmado::after{content:"✓";position:absolute;top:-5px;right:-5px;background:#4CAF50;color:#fff;font-size:9px;width:14px;height:14px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;line-height:14px;text-align:center}
+
+/* BOTOES VALIDAÇÃO */
+.val-actions{padding:14px 22px 16px 26px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.btn-aprovar{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:10px 22px;background:linear-gradient(90deg,#16A34A,#22C55E);border:none;border-radius:var(--radius-sm);color:#fff;cursor:pointer;transition:box-shadow .2s,transform .15s;display:flex;align-items:center;gap:7px}
+.btn-aprovar:hover:not(:disabled){box-shadow:0 4px 16px rgba(22,163,74,.3);transform:translateY(-1px)}
+.btn-aprovar:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btn-corrigir{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:10px 22px;background:#fff;border:1.5px solid var(--warning-border);border-radius:var(--radius-sm);color:var(--warning-text);cursor:pointer;transition:background .2s,box-shadow .2s}
+.btn-corrigir:hover{background:var(--warning-bg);box-shadow:0 2px 8px rgba(245,158,11,.2)}
+.btn-salvar-correcao{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:10px 22px;background:linear-gradient(90deg,var(--red),var(--orange));border:none;border-radius:var(--radius-sm);color:#fff;cursor:pointer;transition:box-shadow .2s,transform .15s}
+.btn-salvar-correcao:hover{box-shadow:0 4px 16px rgba(192,57,43,.3);transform:translateY(-1px)}
+.btn-salvar-correcao:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btn-ver-pdf{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:8px 16px;border:1px solid var(--border-hi);border-radius:var(--radius-sm);background:#fff;color:var(--text-2);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition:border-color .2s,color .2s}
+.btn-ver-pdf:hover{border-color:var(--red-mid);color:var(--red-mid)}
+.val-status-aprovado{font-family:'DM Mono',monospace;font-size:10px;color:var(--success-text);background:var(--success-bg);border:1px solid var(--success-border);padding:4px 10px;border-radius:3px;letter-spacing:.06em}
+.val-row.aprovado::before{background:linear-gradient(to bottom,#16A34A,#22C55E)}
+.val-row.aprovado .val-alert{background:var(--success-bg);border-color:var(--success-border);color:var(--success-text)}
+
+@media(max-width:600px){
+  .topbar{padding:0 16px}
+  main{padding:20px 14px 60px}
+  .card{padding:18px 16px}
+  .field-grid,.field-grid.cols-3{grid-template-columns:1fr}
+  .readout{grid-template-columns:1fr}
+  .readout-cell{border-right:none;border-bottom:1px solid var(--border)}
+  .readout-cell:last-child{border-bottom:none}
+  .laudo-row{grid-template-columns:1fr}
+  .tab-btn{padding:10px 16px;font-size:13px}
+  footer{flex-direction:column;gap:6px;text-align:center}
+  .val-row-header{grid-template-columns:1fr}
+  .val-actions{flex-direction:column;align-items:stretch}
+}
+
+/* ═══════════════════════════════════════
+   NOVO SISTEMA DE VALIDAÇÃO — BLOCOS + PREVIEW
+═══════════════════════════════════════ */
+
+/* Painel lado-a-lado */
+.val-editor-wrap {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 16px;
+  align-items: start;
+  margin: 14px 0 0;
+}
+@media(max-width:900px) {
+  .val-editor-wrap { grid-template-columns: 1fr; }
+  .val-preview-panel { display: none; }
+}
+
+/* Coluna esquerda — blocos */
+.val-blocos { display: flex; flex-direction: column; gap: 8px; }
+
+/* Bloco individual */
+.bloco {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: border-color .2s;
+  background: #fff;
+}
+.bloco.pendente { border-left: 3px solid var(--border-hi); }
+.bloco.confirmado { border-left: 3px solid #16A34A; }
+.bloco.editado { border-left: 3px solid #2563EB; }
+
+.bloco-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  cursor: pointer;
+  user-select: none;
+  transition: background .15s;
+  background: var(--surface);
+}
+.bloco-header:hover { background: var(--surface2); }
+
+.bloco-status-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+  background: var(--border-hi); transition: background .2s;
+}
+.bloco.confirmado .bloco-status-dot { background: #16A34A; }
+.bloco.editado .bloco-status-dot { background: #2563EB; }
+
+.bloco-titulo {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px; font-weight: 500;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--text-2); flex: 1;
+}
+.bloco.confirmado .bloco-titulo { color: #15803D; }
+.bloco.editado .bloco-titulo { color: #1D4ED8; }
+
+.bloco-badge {
+  font-family: 'DM Mono', monospace; font-size: 9px;
+  padding: 2px 7px; border-radius: 3px; letter-spacing: .05em;
+}
+.bloco.pendente .bloco-badge { background: var(--surface2); color: var(--text-3); }
+.bloco.confirmado .bloco-badge { background: #DCFCE7; color: #15803D; }
+.bloco.editado .bloco-badge { background: #DBEAFE; color: #1D4ED8; }
+
+.bloco-chevron {
+  font-size: 11px; color: var(--text-3);
+  transition: transform .2s; flex-shrink: 0;
+}
+.bloco.open .bloco-chevron { transform: rotate(180deg); }
+
+.bloco-body {
+  display: none;
+  padding: 14px 16px;
+  border-top: 1px solid var(--border);
+  background: #fff;
+}
+.bloco.open .bloco-body { display: block; animation: fadeUp .15s ease both; }
+
+.bloco-body textarea {
+  width: 100%; resize: vertical; min-height: 72px;
+  background: #fff; border: 1px solid var(--border-hi);
+  border-radius: var(--radius-sm); padding: 9px 12px;
+  font-family: 'Barlow', sans-serif; font-size: 13px;
+  color: var(--text); outline: none;
+  transition: border-color .2s, box-shadow .2s;
+}
+.bloco-body textarea:focus {
+  border-color: #2563EB;
+  box-shadow: 0 0 0 3px rgba(37,99,235,.08);
+}
+
+.bloco-actions {
+  display: flex; gap: 8px; margin-top: 10px; align-items: center;
+}
+.btn-bloco-confirmar {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 12px; font-weight: 700; letter-spacing: .08em;
+  text-transform: uppercase; padding: 7px 16px;
+  background: #16A34A; border: none; border-radius: var(--radius-sm);
+  color: #fff; cursor: pointer; transition: opacity .15s;
+}
+.btn-bloco-confirmar:hover { opacity: .85; }
+.btn-bloco-editar {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 12px; font-weight: 700; letter-spacing: .08em;
+  text-transform: uppercase; padding: 7px 16px;
+  background: #fff; border: 1px solid #BFDBFE;
+  border-radius: var(--radius-sm); color: #1D4ED8;
+  cursor: pointer; transition: background .15s;
+}
+.btn-bloco-editar:hover { background: #EFF6FF; }
+
+/* Barra de progresso */
+.val-progress-bar {
+  display: flex; gap: 6px; align-items: center;
+  padding: 10px 22px 0 26px; margin-bottom: 4px;
+}
+.val-progress-steps {
+  display: flex; gap: 4px; flex: 1;
+}
+.val-progress-step {
+  height: 4px; border-radius: 2px; flex: 1;
+  background: var(--border); transition: background .3s;
+}
+.val-progress-step.done { background: #16A34A; }
+.val-progress-step.edited { background: #2563EB; }
+.val-progress-label {
+  font-family: 'DM Mono', monospace; font-size: 9px;
+  color: var(--text-3); white-space: nowrap;
+}
+
+/* Botão aprovar principal — fica no rodapé dos blocos */
+.btn-aprovar-final {
+  width: 100%; padding: 14px;
+  background: linear-gradient(90deg, #16A34A, #22C55E);
+  border: none; border-radius: var(--radius-sm);
+  color: #fff; font-family: 'Barlow Condensed', sans-serif;
+  font-size: 15px; font-weight: 800; letter-spacing: .12em;
+  text-transform: uppercase; cursor: pointer; margin-top: 12px;
+  transition: opacity .2s, transform .15s, box-shadow .2s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.btn-aprovar-final:hover:not(:disabled) {
+  box-shadow: 0 6px 20px rgba(22,163,74,.35);
+  transform: translateY(-1px);
+}
+.btn-aprovar-final:disabled {
+  opacity: .35; cursor: not-allowed; transform: none;
+}
+.btn-aprovar-pendente-msg {
+  font-family: 'DM Mono', monospace; font-size: 10px;
+  color: var(--text-3); text-align: center; margin-top: 8px;
+}
+
+/* Preview coluna direita */
+.val-preview-panel {
+  position: sticky; top: 80px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden;
+}
+.val-preview-header {
+  padding: 10px 14px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.val-preview-label {
+  font-family: 'DM Mono', monospace; font-size: 9px;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--text-3);
+}
+.val-preview-badge {
+  font-family: 'DM Mono', monospace; font-size: 8px;
+  background: #DBEAFE; color: #1D4ED8;
+  padding: 2px 6px; border-radius: 3px; letter-spacing: .05em;
+}
+.val-preview-frame {
+  width: 100%; height: 520px; border: none;
+  background: #fff; display: block;
+}
+.val-preview-scale {
+  width: 100%;
+  height: 560px;
+  border: none;
+  display: block;
+  background: #fff;
+}
+
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <svg class="logo-svg" viewBox="0 0 290 70" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="xg" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#C0392B"/>
+        <stop offset="100%" stop-color="#E67E22"/>
+      </linearGradient>
+    </defs>
+    <text x="0" y="52" font-family="'Barlow Condensed',sans-serif" font-weight="900" font-size="54" fill="#111111" letter-spacing="-1">ORTHO</text>
+    <text x="196" y="52" font-family="'Barlow Condensed',sans-serif" font-weight="900" font-size="54" fill="url(#xg)">X</text>
+    <text x="1" y="66" font-family="'Barlow',sans-serif" font-weight="300" font-size="10.5" fill="#AAAAAA" letter-spacing="0.7">Radiologia Odontológica</text>
+    <rect x="228" y="6" width="44" height="44" rx="22" fill="none" stroke="url(#xg)" stroke-width="1.5"/>
+    <text x="250" y="30" font-family="'Barlow Condensed',sans-serif" font-weight="900" font-size="17" fill="url(#xg)" text-anchor="middle">30</text>
+    <text x="250" y="44" font-family="'Barlow Condensed',sans-serif" font-weight="700" font-size="8.5" fill="#E67E22" text-anchor="middle" letter-spacing="1">ANOS</text>
+  </svg>
+  <div class="topbar-right">
+    <span class="badge badge-mvp">MVP</span>
+    <span class="badge badge-atria">by ATRIA</span>
+  </div>
+</div>
+
+<div class="tabs-bar">
+  <button class="tab-btn active" id="tabEnvio" onclick="switchTab('envio', this)">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    Envio
+  </button>
+  <button class="tab-btn" id="tabLaudosBtn" onclick="switchTab('laudos', this)">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    Laudos
+    <span class="tab-notif" id="tabNotif">0</span>
+  </button>
+  <button class="tab-btn" id="tabValBtn" onclick="switchTab('validacao', this)">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+    Validação
+    <span class="tab-notif" id="tabValNotif">0</span>
+  </button>
+</div>
+
+<main>
+  <div class="panel active" id="panel-envio">
+    <div class="section-label">01 · Identificação do Paciente</div>
+    <div class="card">
+      <div class="readout">
+        <div class="readout-cell">
+          <div class="readout-key">Paciente</div>
+          <div class="readout-val" id="dispNome">—</div>
+        </div>
+        <div class="readout-cell">
+          <div class="readout-key">Nasc. · Idade · Sexo</div>
+          <div class="readout-val" id="dispNasc">—</div>
+        </div>
+        <div class="readout-cell">
+          <div class="readout-key">OS · Data</div>
+          <div class="readout-val accent" id="dispOS">—</div>
+        </div>
+      </div>
+      <div class="field-grid">
+        <div class="field" style="grid-column:span 2">
+          <label>Nome completo do paciente</label>
+          <input type="text" id="nomePaciente" placeholder="Ex: Adriana de Camargo Siqueira" oninput="atualizarReadout()">
+        </div>
+      </div>
+      <div class="field-grid cols-3">
+        <div class="field">
+          <label>Data de nascimento</label>
+          <input type="date" id="dataNasc" oninput="atualizarReadout()">
+        </div>
+        <div class="field">
+          <label>Sexo</label>
+          <select id="sexo" onchange="atualizarReadout()">
+            <option value="">Selecione</option>
+            <option>Feminino</option>
+            <option>Masculino</option>
+            <option>Outro</option>
+          </select>
+        </div>
+        <div class="field os-field">
+          <label>Número da OS</label>
+          <input type="text" id="osNum" placeholder="Ex: 54612" oninput="atualizarReadout()">
+        </div>
+      </div>
+      <div class="field-grid">
+        <div class="field">
+          <label>Doutor(a) solicitante</label>
+          <input type="text" id="dentista" placeholder="Ex: Andressa Santos">
+        </div>
+        <div class="field">
+          <label>Data do exame</label>
+          <input type="date" id="dataExame" oninput="atualizarReadout()">
+        </div>
+      </div>
+    </div>
+
+    <div class="section-label">02 · Tipo de Exame</div>
+    <div class="card">
+      <div class="field-grid">
+        <div class="field">
+          <label>Modalidade</label>
+          <select id="tipoExame">
+            <option value="panoramica">Panorâmica</option>
+            <option value="periapical">Periapical</option>
+            <option value="interproximal">Interproximal (Bite-wing)</option>
+            <option value="cefalometrica">Cefalométrica</option>
+            <option value="tomografia">Tomografia (CBCT)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Queixa / Observações clínicas</label>
+          <input type="text" id="queixa" placeholder="Ex: Dor em molares superiores">
+        </div>
+      </div>
+    </div>
+
+    <div class="section-label">03 · Imagem Radiológica</div>
+    <div class="card">
+      <div class="upload-zone" id="uploadZone">
+        <input type="file" id="fileInput" accept="image/*,.pdf" onchange="handleFile(this)">
+        <div class="upload-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"/><polyline points="16 12 12 8 8 12"/><line x1="12" y1="8" x2="12" y2="20"/>
+          </svg>
+        </div>
+        <div class="upload-title">Arraste a imagem ou clique para selecionar</div>
+        <div class="upload-hint">JFIF · JPEG · PNG · TIFF · PDF &nbsp;·&nbsp; Máx 20 MB</div>
+      </div>
+      <div class="preview-wrap" id="previewWrap">
+        <img id="previewImg" src="" alt="Preview">
+        <div class="preview-overlay">
+          <span class="preview-name" id="previewName"></span>
+          <span class="preview-badge-img">RADIOGRAFIA</span>
+        </div>
+      </div>
+      <button class="btn-submit" id="btnSubmit" disabled onclick="enviar()">Enviar para Análise IA →</button>
+      <div class="error-bar" id="errorBar"></div>
+    </div>
+
+    <div class="toast" id="toast">
+      <span class="toast-icon">✅</span>
+      <div class="toast-text">
+        <strong>Exame enviado com sucesso!</strong>
+        O laudo será gerado pela IA e aparecerá na aba <b>Laudos</b> em breve.
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-laudos">
+    <div class="laudos-header">
+      <div>
+        <div class="section-label" style="margin-bottom:4px">Laudos Recebidos</div>
+        <div class="laudos-status">
+          <div class="poll-dot" id="pollDot"></div>
+          <span id="pollStatus">Monitorando automaticamente</span>
+          &nbsp;·&nbsp;
+          <span class="countdown" id="countdown"></span>
+        </div>
+      </div>
+      <button class="btn-refresh" onclick="buscarLaudos(true)">↻ Atualizar agora</button>
+    </div>
+    <div class="skeleton-row" id="skeletonRow">
+      <div class="skeleton" style="width:42%;height:18px;margin-bottom:10px"></div>
+      <div class="skeleton" style="width:66%;height:12px"></div>
+    </div>
+    <div class="laudos-list" id="laudosList"></div>
+  </div>
+
+  <div class="panel" id="panel-validacao">
+    <div class="val-header">
+      <div>
+        <div class="section-label" style="margin-bottom:4px">Fila de Validação — Dra. Gabriela</div>
+        <div class="laudos-status">
+          <div class="poll-dot" id="valPollDot"></div>
+          <span id="valPollStatus">Laudos aguardando revisão clínica</span>
+        </div>
+      </div>
+      <button class="btn-refresh" onclick="buscarValidacoes(true)">↻ Atualizar</button>
+    </div>
+    <div class="skeleton-row" id="skeletonVal">
+      <div class="skeleton" style="width:42%;height:18px;margin-bottom:10px"></div>
+      <div class="skeleton" style="width:66%;height:12px"></div>
+    </div>
+    <div class="val-list" id="valList"></div>
+  </div>
+
+</main>
+
+<footer>
+  <span class="footer-left">OrthoX · Análise auxiliar por IA · Não substitui avaliação clínica profissional · LGPD</span>
+  <span class="footer-right">by <span>ATRIA</span> Corp</span>
+</footer>
+
+<script>
+// ==========================================
+// CONFIGURAÇÕES DO SISTEMA E DE INTEGRAÇÃO
+// ==========================================
+const CFG = {
+  webhookEnvio:   "https://n8n.servidoremn.site/webhook/OrthoX",
+  webhookReprint: "https://n8n.servidoremn.site/webhook/OrthoX-Reprint",
+  orthoXToken:    "OrthoX-Prod-2026!", // Senha configurada no Header Auth do n8n
+  
+  // A chave abaixo é a 'anon key' (pública). Usada APENAS para ler (GET) a lista de laudos.
+  // Nenhum salvamento ou edição é feito através dela, mantendo o banco seguro.
+  supabaseUrl:    "https://jscrpagjdxdsovwcuxfk.supabase.co",
+  supabaseKey:    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpzY3JwYWdqZHhkc292d2N1eGZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NTc1MzUsImV4cCI6MjA5MDEzMzUzNX0.ySi-14EcMFXDVXvilzfIBNxhOdglI-3q0ehXrv9twJ4",
+  tabela:         "laudos",
+  pollSeg:        30,
+};
+
+let selectedFile = null;
+let pollTimer    = null;
+let countInt     = null;
+let countVal     = CFG.pollSeg;
+let vistos       = new Set();
+let novosPend    = 0;
+let valPend      = 0;
+let vistosVal    = new Set();
+const aprovadosEm = {}; 
+const odontogramaState = {}; // Guarda o estado dos dentes para cada laudo
+
+// Dicionário Global para armazenar os dados crus que vêm do banco
+window.laudosDict = {};
+
+/* ── TABS ── */
+function switchTab(nome, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel-' + nome).classList.add('active');
+  if (nome === 'laudos') {
+    novosPend = 0; atualizarNotif();
+    if (!pollTimer) iniciarPolling();
+  }
+  if (nome === 'validacao') {
+    valPend = 0; atualizarValNotif();
+    buscarValidacoes();
+  }
+}
+
+/* ── READOUT ── */
+function atualizarReadout() {
+  const nome    = document.getElementById('nomePaciente').value.trim();
+  const nascRaw = document.getElementById('dataNasc').value;
+  const sexo    = document.getElementById('sexo').value;
+  const os      = document.getElementById('osNum').value.trim();
+  const dataEx  = document.getElementById('dataExame').value;
+  document.getElementById('dispNome').textContent = nome || '—';
+  if (nascRaw) {
+    const nasc = new Date(nascRaw + 'T00:00:00');
+    const hoje = new Date();
+    let a = hoje.getFullYear() - nasc.getFullYear();
+    let m = hoje.getMonth() - nasc.getMonth();
+    if (m < 0) { a--; m += 12; }
+    document.getElementById('dispNasc').textContent =
+      `${nasc.toLocaleDateString('pt-BR')} [${a}a. ${m}m]${sexo ? ' · ' + sexo : ''}`;
+  } else {
+    document.getElementById('dispNasc').textContent = '—';
+  }
+  const df = dataEx ? new Date(dataEx + 'T00:00:00').toLocaleDateString('pt-BR') : '—';
+  document.getElementById('dispOS').textContent = `${os ? 'OS: ' + os : '—'} · ${df}`;
+}
+
+/* ── DRAG & DROP ── */
+const zone = document.getElementById('uploadZone');
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+zone.addEventListener('drop', e => {
+  e.preventDefault(); zone.classList.remove('dragover');
+  if (e.dataTransfer.files[0]) processFile(e.dataTransfer.files[0]);
+});
+function handleFile(i) { if (i.files[0]) processFile(i.files[0]); }
+function processFile(file) {
+  selectedFile = file;
+  document.getElementById('previewName').textContent = file.name;
+  if (file.type.startsWith('image/')) {
+    const r = new FileReader();
+    r.onload = e => {
+      document.getElementById('previewImg').src = e.target.result;
+      document.getElementById('previewWrap').style.display = 'block';
+    };
+    r.readAsDataURL(file);
+  } else {
+    document.getElementById('previewWrap').style.display = 'none';
+  }
+  document.getElementById('btnSubmit').disabled = false;
+  hideError();
+}
+
+/* ── ENVIO (WEBHOOK 1) ── */
+async function enviar() {
+  if (!selectedFile) return;
+
+  const nomePaciente = document.getElementById('nomePaciente').value.trim();
+  const dataNasc     = document.getElementById('dataNasc').value;
+  const sexo         = document.getElementById('sexo').value;
+  if (!nomePaciente) { showError('Preencha o nome do paciente antes de enviar.'); return; }
+  if (!dataNasc)     { showError('Preencha a data de nascimento.'); return; }
+  if (!sexo)         { showError('Selecione o sexo do paciente.'); return; }
+
+  const btn = document.getElementById('btnSubmit');
+  btn.disabled = true; btn.textContent = 'Enviando...';
+  hideError();
+
+  const fd = new FormData();
+  fd.append('imagem',       selectedFile, selectedFile.name);
+  fd.append('nomePaciente', nomePaciente);
+  fd.append('dataNasc',     dataNasc);
+  fd.append('sexo',         sexo);
+  fd.append('osNum',        document.getElementById('osNum').value);
+  fd.append('dentista',     document.getElementById('dentista').value);
+  fd.append('dataExame',    document.getElementById('dataExame').value);
+  fd.append('tipoExame',    document.getElementById('tipoExame').value);
+  fd.append('queixa',       document.getElementById('queixa').value);
+  fd.append('timestamp',    new Date().toISOString());
+
+  try {
+    const res = await fetch(CFG.webhookEnvio, { 
+        method: 'POST', 
+        headers: {
+            'x-orthox-token': CFG.orthoXToken // Envia a senha para o n8n
+        },
+        body: fd 
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    mostrarToast(); resetForm();
+  } catch (err) {
+    showError('Falha no envio: ' + (err.message || 'verifique a conexão com o servidor'));
+  } finally {
+    btn.disabled = false; btn.textContent = 'Enviar para Análise IA →';
+  }
+}
+
+function mostrarToast() {
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 7000);
+}
+
+function resetForm() {
+  ['nomePaciente','dataNasc','osNum','dentista','queixa'].forEach(id =>
+    document.getElementById(id).value = '');
+  document.getElementById('sexo').selectedIndex = 0;
+  document.getElementById('tipoExame').selectedIndex = 0;
+  document.getElementById('fileInput').value = '';
+  document.getElementById('previewWrap').style.display = 'none';
+  document.getElementById('btnSubmit').disabled = true;
+  selectedFile = null;
+  atualizarReadout();
+}
+
+function showError(msg) {
+  const el = document.getElementById('errorBar');
+  el.textContent = '⚠ ' + msg; el.style.display = 'block';
+}
+function hideError() { document.getElementById('errorBar').style.display = 'none'; }
+
+
+/* ══════════════════════════════
+   LAUDOS — POLLING (GET Apenas)
+══════════════════════════════ */
+async function buscarLaudos(manual = false) {
+  if (manual) resetContagem();
+  document.getElementById('skeletonRow').classList.add('show');
+  try {
+    const res = await fetch(
+      `${CFG.supabaseUrl}/rest/v1/${CFG.tabela}?select=*&order=created_at.desc&limit=50`,
+      { headers: { 'apikey': CFG.supabaseKey, 'Authorization': 'Bearer ' + CFG.supabaseKey } }
+    );
+    if (!res.ok) throw new Error('Supabase ' + res.status);
+    const dados = await res.json();
+    renderLaudos(dados);
+
+    const aguardandoPdf = dados.some(l => aprovadosEm[l.id] && (Date.now() - aprovadosEm[l.id]) < 20000);
+    if (aguardandoPdf) {
+      clearTimeout(window._reprintCheck);
+      window._reprintCheck = setTimeout(() => buscarLaudos(), 4000);
+    }
+
+    const pendentes = dados.filter(l => precisaValidacao(l));
+    const novosVal = pendentes.filter(l => !vistosVal.has(l.id));
+    if (novosVal.length > 0) {
+      valPend += novosVal.length;
+      novosVal.forEach(l => vistosVal.add(l.id));
+      atualizarValNotif();
+    }
+  } catch (err) {
+    console.error('Polling:', err);
+    document.getElementById('pollStatus').textContent = 'Erro — tentando novamente em breve';
+  } finally {
+    document.getElementById('skeletonRow').classList.remove('show');
+  }
+}
+
+function renderLaudos(lista) {
+  const el = document.getElementById('laudosList');
+  if (!lista || lista.length === 0) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">Nenhum laudo ainda</div><div class="empty-sub">Os laudos aparecerão aqui assim que a IA concluir a análise</div></div>`;
+    return;
+  }
+  const primeiraVez = vistos.size === 0;
+  lista.forEach(l => { if (!vistos.has(l.id)) { if (!primeiraVez) novosPend++; vistos.add(l.id); } });
+  atualizarNotif();
+  el.innerHTML = lista.map((l, idx) => {
+    const isNovo = !primeiraVez && idx === 0 && novosPend > 0;
+    const dt = l.created_at ? new Date(l.created_at).toLocaleString('pt-BR') : '—';
+    let btnHtml;
+    const precisaValidar = precisaValidacao(l);
+    const aprovadoAgora = aprovadosEm[l.id] && (Date.now() - aprovadosEm[l.id]) < 20000;
+    const pdfPronto = l.pdf_url && l.status === 'Aprovado' && !aprovadoAgora;
+
+    if (precisaValidar) {
+      btnHtml = `<button class="btn-download btn-download-disabled" style="background:linear-gradient(90deg,#92400E,#B45309);opacity:1;cursor:not-allowed;" title="Aguardando validação da Dra. Gabriela">🔒 Aguard. Validação</button>`;
+    } else if (aprovadoAgora) {
+      btnHtml = `<button class="btn-download btn-download-disabled" style="opacity:1;cursor:not-allowed;">⏳ Atualizando PDF...</button>`;
+    } else if (pdfPronto) {
+      btnHtml = `<a class="btn-download" href="${esc(l.pdf_url)}" target="_blank" download>⬇ Baixar PDF</a>`;
+    } else if (l.pdf_url && l.pdf_url !== "Aguardando Validação") {
+      btnHtml = `<a class="btn-download" href="${esc(l.pdf_url)}" target="_blank" download>⬇ Baixar PDF</a>`;
+    } else {
+      btnHtml = `<button class="btn-download btn-download-disabled">⏳ Gerando...</button>`;
+    }
+    const statusBadge = l.status === 'Aprovado'
+      ? `<span style="position:absolute;top:10px;right:10px;font-family:'DM Mono',monospace;font-size:9px;background:#16A34A;color:#fff;padding:2px 7px;border-radius:3px;letter-spacing:.06em">✓ APROVADO</span>`
+      : precisaValidacao(l)
+        ? `<span style="position:absolute;top:10px;right:10px;font-family:'DM Mono',monospace;font-size:9px;background:var(--warning-border);color:#fff;padding:2px 7px;border-radius:3px;letter-spacing:.06em">⚠ VALIDAR</span>`
+        : (isNovo ? '<span class="laudo-new">NOVO</span>' : '');
+    return `
+    <div class="laudo-row">
+      ${statusBadge}
+      <div class="laudo-info">
+        <div class="laudo-paciente">${esc(l.nome_paciente || 'Paciente')}</div>
+        <div class="laudo-meta">
+          <span class="laudo-chip">OS <span>${esc(l.os || '—')}</span></span>
+          <span class="laudo-chip">Tipo <span>${esc(l.tipo_exame || '—')}</span></span>
+          <span class="laudo-chip">Doutor(a) <span>${esc(l.dentista || '—')}</span></span>
+          <span class="laudo-chip">Recebido <span>${dt}</span></span>
+        </div>
+      </div>
+      ${btnHtml}
+    </div>`;
+  }).join('');
+}
+
+function atualizarNotif() {
+  const el = document.getElementById('tabNotif');
+  if (novosPend > 0) { el.textContent = novosPend; el.classList.add('show'); }
+  else el.classList.remove('show');
+}
+function atualizarValNotif() {
+  const el = document.getElementById('tabValNotif');
+  if (valPend > 0) { el.textContent = valPend; el.classList.add('show'); }
+  else el.classList.remove('show');
+}
+
+function iniciarPolling() {
+  buscarLaudos();
+  resetContagem();
+  pollTimer = setInterval(() => { buscarLaudos(); resetContagem(); }, CFG.pollSeg * 1000);
+}
+
+function resetContagem() {
+  clearInterval(countInt);
+  countVal = CFG.pollSeg;
+  renderContagem();
+  countInt = setInterval(() => { countVal = Math.max(0, countVal - 1); renderContagem(); }, 1000);
+}
+
+function renderContagem() {
+  const el = document.getElementById('countdown');
+  if (el) el.textContent = countVal > 0 ? `próxima em ${countVal}s` : 'atualizando...';
+}
+
+
+/* ══════════════════════════════
+   VALIDAÇÃO E ODONTOGRAMA VISUAL
+══════════════════════════════ */
+function precisaValidacao(l) {
+  if (l.status === 'Aprovado') return false;
+  // Usa campo rota do novo pipeline
+  if (l.status === 'Aguardando Revisão' || l.status === 'Aguardando Validação') return true;
+  if (l.alerta_validacao_humana === 'ALTO RISCO' || l.alerta_validacao_humana === 'REVISAR') return true;
+  const achados = l.achados_radiograficos;
+  if (achados) {
+    let obj = achados;
+    if (typeof obj === 'string') { try { obj = JSON.parse(obj); } catch(e) { obj = null; } }
+    if (obj) {
+      const textos = Object.values(obj).join(' ');
+      if (textos.includes('ATENÇÃO DRA')) return true;
+    }
+  }
+  if (l.status === 'Concluído') return true;
+  return false;
+}
+
+function extrairDivergencia(l) {
+  // Prioriza motivos_revisao do novo pipeline (confidence scoring)
+  if (l.motivos_revisao && Array.isArray(l.motivos_revisao) && l.motivos_revisao.length > 0) {
+    return l.motivos_revisao.join(' · ');
+  }
+  if (l.motivos_revisao && typeof l.motivos_revisao === 'string') {
+    try {
+      const arr = JSON.parse(l.motivos_revisao);
+      if (arr.length > 0) return arr.join(' · ');
+    } catch(e) {}
+  }
+  // Fallback: analisa texto de achados (pipeline antigo)
+  let achados = l.achados_radiograficos;
+  if (typeof achados === 'string') { try { achados = JSON.parse(achados); } catch(e) { achados = null; } }
+  if (achados) {
+    for (const val of Object.values(achados)) {
+      if (val && typeof val === 'string' && val.includes('ATENÇÃO DRA')) {
+        const match = val.match(/\[ATENÇÃO DRA[^\]]+\]/);
+        if (match) return match[0].replace('[','').replace(']','');
+      }
+    }
+  }
+  if (l.alerta_validacao_humana === 'ALTO RISCO') {
+    return 'Este laudo contém achados de alto risco que requerem revisão imediata.';
+  }
+  return 'Laudo aguardando revisão e aprovação pela radiologista responsável.';
+}
+
+async function buscarValidacoes(manual = false) {
+  document.getElementById('skeletonVal').classList.add('show');
+  document.getElementById('valPollDot').classList.remove('off');
+  try {
+    const res = await fetch(
+      `${CFG.supabaseUrl}/rest/v1/${CFG.tabela}?select=*&order=created_at.desc&limit=100`,
+      { headers: { 'apikey': CFG.supabaseKey, 'Authorization': 'Bearer ' + CFG.supabaseKey } }
+    );
+    if (!res.ok) throw new Error('Supabase ' + res.status);
+    const dados = await res.json();
+    const paraValidar = dados.filter(l => l.status !== 'Erro - Imagem Inválida');
+    renderValidacoes(paraValidar);
+  } catch (err) {
+    console.error('Validação polling:', err);
+    document.getElementById('valPollStatus').textContent = 'Erro ao carregar';
+    document.getElementById('valPollDot').classList.add('off');
+  } finally {
+    document.getElementById('skeletonVal').classList.remove('show');
+  }
+}
+
+// ── TEMPLATE DO PDF (inline) para preview ──────────────────
+const PDF_TEMPLATE = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--pr:#B91C1C;--se:#EA580C;--tp:#111827;--ts:#4B5563;--tm:#6B7280;--bo:#D1D5DB;--bg:#F3F4F6}
+body{font-family:'Inter',sans-serif;color:var(--tp);line-height:1.5;padding:20pt 24pt;background:white;font-size:10pt;zoom:0.7}
+.hdr{display:flex;justify-content:space-between;align-items:center;padding-bottom:20pt;margin-bottom:25pt;border-bottom:2.5pt solid var(--pr)}
+.logo{font-weight:800;font-size:28pt;letter-spacing:-1pt;color:var(--tp)}.logo span{color:var(--pr)}
+.osbadge{background:linear-gradient(135deg,var(--pr),var(--se));color:white;padding:8pt 16pt;border-radius:6pt;font-weight:700;font-size:12pt}
+.pb{display:grid;grid-template-columns:repeat(2,1fr);gap:15pt;background:var(--bg);padding:18pt;border-radius:10pt;margin-bottom:30pt;border:1pt solid var(--bo)}
+.pf{display:flex;flex-direction:column;gap:2pt}.pff{grid-column:span 2}
+.lbl{font-weight:700;text-transform:uppercase;color:var(--tm);font-size:8.5pt;letter-spacing:.5pt}
+.val{color:var(--tp);font-size:11pt;font-weight:600}
+.sec{margin-bottom:25pt}.st{color:var(--pr);font-size:12.5pt;font-weight:800;text-transform:uppercase;letter-spacing:.5pt;padding-bottom:6pt;margin-bottom:12pt;border-bottom:1.5pt solid #FEE2E2}
+.sub{margin-bottom:12pt}.subt{font-weight:700;font-size:10pt;color:var(--tp);margin-bottom:4pt}
+.subc{color:var(--ts);padding-left:12pt;border-left:2pt solid var(--bo)}
+ul{list-style:none;padding-top:5pt}li{padding-left:18pt;position:relative;margin-bottom:8pt}
+li:before{content:"•";color:var(--pr);font-weight:900;position:absolute;left:5pt;font-size:14pt;top:-2pt}
+.sig{text-align:center;margin-top:45pt}.sigl{border-top:1.5pt solid var(--tp);width:220pt;margin:0 auto 10pt}
+.sign{font-weight:800;font-size:12pt}.sigt{color:var(--ts);font-size:10pt;font-weight:500}
+.ftr{margin-top:40pt;padding-top:15pt;border-top:1pt solid var(--bo);display:flex;justify-content:space-between;font-size:9pt;color:var(--tm)}
+.fb{background:var(--bg);padding:4pt 10pt;border-radius:4pt;font-weight:600;border:.5pt solid var(--bo)}
+</style></head><body>
+<div class="hdr"><div class="logo">ORTHO<span>X</span></div><div class="osbadge">OS #{{OS}}</div></div>
+<div class="pb">
+  <div class="pf"><span class="lbl">Paciente</span><span class="val">{{PACIENTE}}</span></div>
+  <div class="pf"><span class="lbl">Data do Exame</span><span class="val">{{DATA_EXAME}}</span></div>
+  <div class="pf"><span class="lbl">Doutor(a) Solicitante</span><span class="val">{{DENTISTA}}</span></div>
+  <div class="pf"><span class="lbl">Data de Nascimento</span><span class="val">{{DATA_NASC}}</span></div>
+  <div class="pf"><span class="lbl">Sexo</span><span class="val">{{SEXO}}</span></div>
+  {{QUEIXA_BLOCK}}
+</div>
+<div class="sec"><div class="st">Achados Radiográficos</div><div>
+  {{ACHADOS_BLOCKS}}
+</div></div>
+<div class="sec"><div class="st">Impressão Radiográfica</div><ul>{{IMP_ITEMS}}</ul></div>
+<div class="sec"><div class="st">Recomendações Ortho X</div><ul>{{REC_ITEMS}}</ul></div>
+<div class="sig"><div class="sigl"></div><div class="sign">Dra. Gabriela Biagioni</div><div class="sigt">Radiologista Odontológica · Mestre em Estomatologia</div></div>
+<div class="ftr"><span>Ortho X — Radiologia Odontológica Digital</span><span class="fb">Tecnologia OrthoX IA RAG · {{OS}}</span></div>
+</body></html>`;
+
+// Definição dos blocos de validação
+const BLOCOS_DEF = [
+  { key: 'denticao',   titulo: 'Dentição e Ausências',          campo: 'denticao_ausencias',                     temOdonto: true  },
+  { key: 'reab',       titulo: 'Reabilitações e Implantes',      campo: 'reabilitacoes_implantes',                temOdonto: false },
+  { key: 'endo',       titulo: 'Endodontia e Restaurações',      campo: 'tratamentos_endodonticos_restauracoes',  temOdonto: false },
+  { key: 'osseo',      titulo: 'Avaliação Óssea / Periodontal',  campo: 'avaliacao_ossea_periodontal',            temOdonto: false },
+  { key: 'seios',      titulo: 'Seios Maxilares / Estruturas',   campo: 'seios_maxilares_estruturas_adjacentes',  temOdonto: false },
+  { key: 'impressao',  titulo: 'Impressão Radiográfica',         campo: '_impressao',                             temOdonto: false },
+  { key: 'rec',        titulo: 'Recomendações',                  campo: '_recomendacoes',                         temOdonto: false },
+];
+
+// Estado dos blocos por laudo
+window.blocosState = {};   // { [id]: { [key]: 'pendente'|'confirmado'|'editado' } }
+window.blocosOpen  = {};   // { [id]: Set de keys abertas }
+
+function renderValidacoes(lista) {
+  const el = document.getElementById('valList');
+  const pendentes = lista.filter(l => precisaValidacao(l));
+  const aprovados  = lista.filter(l => l.status === 'Aprovado').slice(0, 3);
+
+  document.getElementById('valPollStatus').textContent =
+    pendentes.length > 0 ? `${pendentes.length} laudo(s) aguardando validação` : 'Nenhum laudo pendente';
+
+  const todos = [...pendentes, ...aprovados];
+  if (todos.length === 0) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">Todos os laudos aprovados</div><div class="empty-sub">Não há laudos pendentes de validação</div></div>`;
+    return;
+  }
+
+  window.laudosDict = {};
+  el.innerHTML = todos.map(l => {
+    window.laudosDict[l.id] = l;
+    if (!window.blocosState[l.id]) window.blocosState[l.id] = {};
+    if (!window.blocosOpen[l.id])  window.blocosOpen[l.id]  = new Set();
+
+    const aprovado = l.status === 'Aprovado';
+    const dt = l.created_at ? new Date(l.created_at).toLocaleString('pt-BR') : '—';
+    const divergencia = extrairDivergencia(l);
+
+    return `
+    <div class="val-row ${aprovado ? 'aprovado' : ''}" id="valrow-${esc(l.id)}">
+      <div class="val-row-header">
+        <div>
+          <div class="val-paciente">${esc(l.nome_paciente || 'Paciente')}</div>
+          <div class="val-meta">
+            <span class="val-chip">OS <span>${esc(l.os || '—')}</span></span>
+            <span class="val-chip">Tipo <span>${esc(l.tipo_exame || '—')}</span></span>
+            <span class="val-chip">Doutor(a) <span>${esc(l.dentista || '—')}</span></span>
+            <span class="val-chip">Gerado em <span>${dt}</span></span>
+            ${l.score_concordancia != null ? `<span class="val-chip">Score <span style="color:${l.score_concordancia >= 80 ? 'var(--success-text)' : 'var(--warning-text)'}">${l.score_concordancia >= 80 ? '✓ ' : '⚠ '}${l.score_concordancia}</span></span>` : ''}
+          </div>
+        </div>
+        ${aprovado
+          ? `<span class="val-status-aprovado">✓ APROVADO</span>`
+          : `<span style="font-family:'DM Mono',monospace;font-size:9px;background:var(--warning-border);color:#fff;padding:4px 10px;border-radius:3px;letter-spacing:.06em">⚠ PENDENTE</span>`}
+      </div>
+
+      <div class="val-alert">
+        <strong>${aprovado ? '✓ Validação concluída' : '⚠ Atenção — Revisão necessária'}</strong>
+        <span class="val-alert-text">${esc(divergencia)}</span>
+      </div>
+
+      ${aprovado ? `
+        <div class="val-actions">
+          <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--success-text)">✓ Laudo validado e liberado para o solicitante</span>
+          ${l.pdf_url && l.pdf_url !== 'Aguardando Validação' ? `<a class="btn-ver-pdf" href="${esc(l.pdf_url)}" target="_blank">📄 Ver PDF</a>` : ''}
+        </div>
+      ` : `
+        <div id="editor-wrap-${esc(l.id)}" style="display:none">
+          <div class="val-progress-bar">
+            <div class="val-progress-steps" id="progress-steps-${esc(l.id)}"></div>
+            <span class="val-progress-label" id="progress-label-${esc(l.id)}">0 / ${BLOCOS_DEF.length}</span>
+          </div>
+          <div class="val-editor-wrap">
+            <div class="val-blocos" id="blocos-${esc(l.id)}"></div>
+            <div class="val-preview-panel">
+              <div class="val-preview-header">
+                <span class="val-preview-label">Preview do PDF</span>
+                <span class="val-preview-badge">Ao vivo</span>
+              </div>
+              <iframe id="preview-frame-${esc(l.id)}" class="val-preview-scale" scrolling="yes"></iframe>
+            </div>
+          </div>
+          <div style="padding:0 0 16px">
+            <button class="btn-aprovar-final" id="btn-final-${esc(l.id)}" disabled onclick="finalizarLaudo('${esc(l.id)}')">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Aprovar e Gerar PDF
+            </button>
+            <div class="btn-aprovar-pendente-msg" id="msg-final-${esc(l.id)}">Revise todos os blocos para liberar</div>
+          </div>
+        </div>
+        <div class="val-actions" id="actions-${esc(l.id)}">
+          <button class="btn-aprovar" onclick="aprovarSemEditar('${esc(l.id)}')" id="btnaprovar-${esc(l.id)}">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Aprovar sem editar
+          </button>
+          <button class="btn-corrigir" onclick="abrirEditor('${esc(l.id)}')">
+            ✏️ Revisar com Editor
+          </button>
+          ${l.pdf_url && l.pdf_url !== 'Aguardando Validação' ? `<a class="btn-ver-pdf" href="${esc(l.pdf_url)}" target="_blank">📄 Ver PDF</a>` : ''}
+        </div>
+      `}
+    </div>`;
+  }).join('');
+}
+
+// ── Abrir editor de blocos ───────────────────────────────────
+function abrirEditor(id) {
+  const l = window.laudosDict[id];
+  document.getElementById('actions-' + id).style.display = 'none';
+  document.getElementById('editor-wrap-' + id).style.display = 'block';
+
+  let achados = l.achados_radiograficos || {};
+  if (typeof achados === 'string') { try { achados = JSON.parse(achados); } catch(e) { achados = {}; } }
+
+  let imp = l.impressao_radiografica || [];
+  if (typeof imp === 'string') { try { imp = JSON.parse(imp); } catch(e) { imp = [imp]; } }
+  const impStr = Array.isArray(imp) ? imp.join('\n') : imp;
+
+  let rec = l.recomendacoes_orthox || [];
+  if (typeof rec === 'string') { try { rec = JSON.parse(rec); } catch(e) { rec = [rec]; } }
+  const recStr = Array.isArray(rec) ? rec.join('\n') : rec;
+
+  // Valores iniciais por campo
+  const vals = {
+    denticao_ausencias:                   achados.denticao_ausencias || '',
+    reabilitacoes_implantes:              achados.reabilitacoes_implantes || '',
+    tratamentos_endodonticos_restauracoes: achados.tratamentos_endodonticos_restauracoes || '',
+    avaliacao_ossea_periodontal:          achados.avaliacao_ossea_periodontal || '',
+    seios_maxilares_estruturas_adjacentes: achados.seios_maxilares_estruturas_adjacentes || '',
+    _impressao:    impStr,
+    _recomendacoes: recStr,
+  };
+
+  window.blocosVals = window.blocosVals || {};
+  window.blocosVals[id] = { ...vals };
+
+  const container = document.getElementById('blocos-' + id);
+  container.innerHTML = '';
+
+  // ── IMAGEM ORIGINAL ─────────────────────────────────────
+  if (l.imagem_url) {
+    const imgWrap = document.createElement('div');
+    imgWrap.style.cssText = 'border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:12px;background:#111;';
+    imgWrap.innerHTML = `
+      <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);padding:8px 12px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+        <span>Radiografia Original</span>
+        <a href="${l.imagem_url}" target="_blank" style="font-size:9px;color:var(--red-mid);text-decoration:none;font-weight:600;letter-spacing:.05em;">Abrir em tela cheia ↗</a>
+      </div>
+      <img src="${l.imagem_url}"
+        style="width:100%;max-height:300px;object-fit:contain;display:block;background:#111;cursor:zoom-in;"
+        onclick="window.open('${l.imagem_url}','_blank')"
+        onerror="this.closest('div').style.display='none'"
+        alt="Radiografia">
+    `;
+    container.appendChild(imgWrap);
+  }
+  // ── FIM DA IMAGEM ───────────────────────────────────────
+
+  BLOCOS_DEF.forEach(def => {
+    const estado = window.blocosState[id][def.key] || 'pendente';
+    const val = vals[def.campo] || '';
+    const isEmpty = !val.trim();
+    const badgeTexto = { pendente: 'Pendente', confirmado: '✓ OK', editado: '✏ Editado' }[estado];
+
+    const bloco = document.createElement('div');
+    // Bloco de dentição começa aberto para o odontograma ser visível de imediato
+    const abrirInicio = def.key === 'denticao';
+    bloco.className = `bloco ${estado}${abrirInicio ? ' open' : ''}`;
+    bloco.id = `bloco-${id}-${def.key}`;
+
+    // Header clicável
+    bloco.innerHTML = `
+      <div class="bloco-header" onclick="toggleBloco('${id}','${def.key}')">
+        <div class="bloco-status-dot"></div>
+        <span class="bloco-titulo">${def.titulo}</span>
+        ${isEmpty ? `<span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text-3);padding:2px 7px;border-radius:3px;background:var(--surface2)">vazio</span>` : `<span class="bloco-badge">${badgeTexto}</span>`}
+        <span class="bloco-chevron">▼</span>
+      </div>
+      <div class="bloco-body">
+        ${def.temOdonto ? `
+          <div class="odontograma-wrap" style="margin-bottom:12px">
+            <div class="odonto-instrucao" style="font-size:12px;margin-bottom:10px">
+              <strong>✅ Verde</strong> = confirmado pela IA &nbsp;·&nbsp; <strong style="color:var(--warning-text)">⚠ Amarelo</strong> = divergência &nbsp;·&nbsp; <strong>Branco</strong> = presente
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div><div class="odonto-arcada-label">Superior direito</div><div class="odonto-row" id="q1-${id}"></div></div>
+              <div><div class="odonto-arcada-label">Superior esquerdo</div><div class="odonto-row" id="q2-${id}"></div></div>
+              <div><div class="odonto-arcada-label">Inferior esquerdo</div><div class="odonto-row" id="q3-${id}"></div></div>
+              <div><div class="odonto-arcada-label">Inferior direito</div><div class="odonto-row" id="q4-${id}"></div></div>
+            </div>
+          </div>
+        ` : ''}
+        <textarea id="bloco-ta-${id}-${def.key}" rows="${def.key === 'impressao' || def.key === 'rec' ? 5 : 3}"
+          oninput="onBlocoInput('${id}','${def.key}')">${escHtml(val)}</textarea>
+        <div class="bloco-actions">
+          <button class="btn-bloco-confirmar" onclick="confirmarBloco('${id}','${def.key}')">✓ Confirmar</button>
+          <button class="btn-bloco-editar" onclick="editarBloco('${id}','${def.key}')">✏ Marcar como editado</button>
+        </div>
+      </div>`;
+
+    container.appendChild(bloco);
+
+    // Odontograma inicializado no toggleBloco, quando o DOM já existe
+  });
+
+  atualizarProgressBar(id);
+  atualizarPreview(id);
+  // Inicializa odontograma agora que o bloco de dentição já está aberto no DOM
+  setTimeout(() => {
+    if (!odontogramaState[id]) inicializarOdontograma(id);
+  }, 0);
+}
+
+// ── Toggle bloco ─────────────────────────────────────────────
+function toggleBloco(id, key) {
+  const bloco = document.getElementById(`bloco-${id}-${key}`);
+  bloco.classList.toggle('open');
+  // Inicializa odontograma ao abrir o bloco de dentição (DOM já existe)
+  if (key === 'denticao' && bloco.classList.contains('open') && !odontogramaState[id]) {
+    inicializarOdontograma(id);
+  }
+}
+
+// ── Input no textarea do bloco ────────────────────────────────
+function onBlocoInput(id, key) {
+  const ta = document.getElementById(`bloco-ta-${id}-${key}`);
+  if (!window.blocosVals[id]) window.blocosVals[id] = {};
+  const def = BLOCOS_DEF.find(d => d.key === key);
+  window.blocosVals[id][def.campo] = ta.value;
+  // Marca como editado ao digitar (mas não fecha o bloco)
+  setEstadoBloco(id, key, 'editado');
+  atualizarPreview(id);
+}
+
+// ── Confirmar bloco ───────────────────────────────────────────
+function confirmarBloco(id, key) {
+  setEstadoBloco(id, key, 'confirmado');
+  // Fecha o bloco após confirmar
+  const bloco = document.getElementById(`bloco-${id}-${key}`);
+  bloco.classList.remove('open');
+  atualizarProgressBar(id);
+  atualizarPreview(id);
+}
+
+function editarBloco(id, key) {
+  setEstadoBloco(id, key, 'editado');
+  atualizarProgressBar(id);
+  atualizarPreview(id);
+}
+
+function setEstadoBloco(id, key, estado) {
+  if (!window.blocosState[id]) window.blocosState[id] = {};
+  window.blocosState[id][key] = estado;
+  const bloco = document.getElementById(`bloco-${id}-${key}`);
+  if (!bloco) return;
+  bloco.classList.remove('pendente','confirmado','editado');
+  bloco.classList.add(estado);
+  const badgeMap = { pendente:'Pendente', confirmado:'✓ OK', editado:'✏ Editado' };
+  const badgeEl = bloco.querySelector('.bloco-badge');
+  if (badgeEl) badgeEl.textContent = badgeMap[estado];
+}
+
+// ── Barra de progresso ────────────────────────────────────────
+function atualizarProgressBar(id) {
+  const estado = window.blocosState[id] || {};
+  const total = BLOCOS_DEF.length;
+  let feitos = 0;
+  const stepsEl = document.getElementById('progress-steps-' + id);
+  const labelEl = document.getElementById('progress-label-' + id);
+  const btnFinal = document.getElementById('btn-final-' + id);
+  const msgFinal = document.getElementById('msg-final-' + id);
+  if (!stepsEl) return;
+
+  stepsEl.innerHTML = BLOCOS_DEF.map(def => {
+    const e = estado[def.key] || 'pendente';
+    if (e !== 'pendente') feitos++;
+    return `<div class="val-progress-step ${e === 'confirmado' ? 'done' : e === 'editado' ? 'edited' : ''}"></div>`;
+  }).join('');
+
+  if (labelEl) labelEl.textContent = `${feitos} / ${total}`;
+
+  if (btnFinal) {
+    const tudo = feitos === total;
+    btnFinal.disabled = !tudo;
+    if (msgFinal) msgFinal.style.display = tudo ? 'none' : 'block';
+  }
+}
+
+// ── Preview ao vivo ───────────────────────────────────────────
+function atualizarPreview(id) {
+  const l = window.laudosDict[id];
+  if (!l) return;
+  const v = window.blocosVals[id] || {};
+
+  const achados = {
+    denticao_ausencias:                    v.denticao_ausencias || '',
+    reabilitacoes_implantes:               v.reabilitacoes_implantes || '',
+    tratamentos_endodonticos_restauracoes: v.tratamentos_endodonticos_restauracoes || '',
+    avaliacao_ossea_periodontal:           v.avaliacao_ossea_periodontal || '',
+    seios_maxilares_estruturas_adjacentes: v.seios_maxilares_estruturas_adjacentes || '',
+  };
+
+  const impArr = (v._impressao || '').split('\n').filter(x => x.trim());
+  const recArr = (v._recomendacoes || '').split('\n').filter(x => x.trim());
+
+  const subsecMap = {
+    denticao_ausencias:                    'Dentição e Ausências',
+    reabilitacoes_implantes:               'Reabilitações e Implantes',
+    tratamentos_endodonticos_restauracoes: 'Tratamentos Endodônticos e Restaurações',
+    avaliacao_ossea_periodontal:           'Avaliação Óssea e Periodontal',
+    seios_maxilares_estruturas_adjacentes: 'Seios Maxilares e Estruturas Adjacentes',
+  };
+
+  const achadosHtml = Object.entries(achados)
+    .filter(([,v]) => v.trim())
+    .map(([k,v]) => `<div class="sub"><div class="subt">${subsecMap[k]}</div><div class="subc">${escHtml(v)}</div></div>`)
+    .join('');
+
+  const queixaBlock = l.queixa ? `<div class="pf pff"><span class="lbl">Queixa</span><span class="val">${escHtml(l.queixa)}</span></div>` : '';
+
+  let html = PDF_TEMPLATE
+    .replace(/{{OS}}/g, escHtml(l.os || '—'))
+    .replace('{{PACIENTE}}',   escHtml(l.nome_paciente || '—'))
+    .replace('{{DATA_EXAME}}', escHtml(l.data_exame || '—'))
+    .replace('{{DENTISTA}}',   escHtml(l.dentista || '—'))
+    .replace('{{DATA_NASC}}',  escHtml(l.data_nasc || '—'))
+    .replace('{{SEXO}}',       escHtml(l.sexo || '—'))
+    .replace('{{QUEIXA_BLOCK}}',  queixaBlock)
+    .replace('{{ACHADOS_BLOCKS}}', achadosHtml)
+    .replace('{{IMP_ITEMS}}',  impArr.map(i => `<li>${escHtml(i)}</li>`).join(''))
+    .replace('{{REC_ITEMS}}',  recArr.map(i => `<li>${escHtml(i)}</li>`).join(''));
+
+  const frame = document.getElementById('preview-frame-' + id);
+  if (!frame) return;
+  const doc = frame.contentDocument || frame.contentWindow.document;
+  doc.open(); doc.write(html); doc.close();
+}
+
+function escHtml(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Finalizar laudo (novo botão unificado) ────────────────────
+async function finalizarLaudo(id) {
+  const btnEl = document.getElementById('btn-final-' + id);
+  const l = window.laudosDict[id];
+  const v = window.blocosVals[id] || {};
+  const limpar = t => typeof t === 'string' ? t.replace(/[\u2022\u2023\u25E6\u2043\u2219]/g,'').trim() : t;
+
+  let denticaoText = (v.denticao_ausencias || '').replace(/\[ATENÇÃO DRA.*?\]/g,'').trim();
+
+  const pacote = {
+    laudo_id: id,
+    nomePaciente: l.nome_paciente,
+    osNum: l.os,
+    dentista: l.dentista,
+    dataExame: l.data_exame,
+    tipoExame: l.tipo_exame,
+    dataNasc: l.data_nasc,
+    sexo: l.sexo,
+    queixa: l.queixa,
+    nivel_dificuldade: l.nivel_dificuldade,
+    imagem_url: l.imagem_url || '',
+    achados_radiograficos: {
+      denticao_ausencias:                    denticaoText,
+      reabilitacoes_implantes:               v.reabilitacoes_implantes || '',
+      tratamentos_endodonticos_restauracoes: v.tratamentos_endodonticos_restauracoes || '',
+      avaliacao_ossea_periodontal:           v.avaliacao_ossea_periodontal || '',
+      seios_maxilares_estruturas_adjacentes: v.seios_maxilares_estruturas_adjacentes || '',
+    },
+    impressao_radiografica: (v._impressao || '').split('\n').map(limpar).filter(x => x),
+    recomendacoes_orthox:   (v._recomendacoes || '').split('\n').map(limpar).filter(x => x),
+  };
+
+  await dispararWebhookReprint(id, pacote, btnEl, 'Gerando PDF...');
+}
+
+
+/* ══════════════════════════════
+   LÓGICA DO ODONTOGRAMA VISUAL
+══════════════════════════════ */
+function inicializarOdontograma(id) {
+  const quadrantes = {
+    'q1': [18,17,16,15,14,13,12,11],
+    'q2': [21,22,23,24,25,26,27,28],
+    'q3': [38,37,36,35,34,33,32,31],
+    'q4': [48,47,46,45,44,43,42,41]
+  };
+
+  const confirmados = new Set();
+  const divergentes = new Set();
+  const l = window.laudosDict[id];
+
+  let achados = l.achados_radiograficos || {};
+  if (typeof achados === 'string') { try { achados = JSON.parse(achados); } catch(e) { achados = {}; } }
+  
+  const textoDenticao = achados.denticao_ausencias || '';
+
+  // Procura no texto original quais estão confirmados ou divergentes
+  // Tenta padrão 1: "confirmadas por dupla análise: 18, 28..."
+const matchConf = textoDenticao.match(/confirmad[aoe\s]+[^:]*:\s*([\d,\s.eE]+)/i);
+if (matchConf) {
+  matchConf[1].match(/\b(\d{2})\b/g)?.forEach(n => {
+    const num = parseInt(n);
+    if (num >= 11 && num <= 48) confirmados.add(num);
+  });
+}
+
+// Tenta padrão 2: "elementos 18, 28, 38 e 48" (formato do Redator)
+if (confirmados.size === 0) {
+  const matchElem = textoDenticao.match(/elementos?\s+([\d,\s.eE]+)/i);
+  if (matchElem) {
+    matchElem[1].match(/\b(\d{2})\b/g)?.forEach(n => {
+      const num = parseInt(n);
+      if (num >= 11 && num <= 48) confirmados.add(num);
+    });
+  }
+}
+
+// Tenta padrão 3: "Checar clinicamente: 18, 28..." (divergências)
+const matchDiv = textoDenticao.match(/[Cc]hecar clinicamente[^:]*:\s*([\d,\s.eE]+)/);
+if (matchDiv) {
+  matchDiv[1].match(/\b(\d{2})\b/g)?.forEach(n => {
+    const num = parseInt(n);
+    if (num >= 11 && num <= 48) divergentes.add(num);
+  });
+}
+
+// Fallback geral
+if (confirmados.size === 0 && divergentes.size === 0) {
+  const rowEl = document.getElementById('valrow-' + id);
+  const textoTela = rowEl?.querySelector('.val-alert-text')?.textContent || '';
+  textoTela.match(/\b(\d{2})\b/g)?.forEach(n => {
+    const num = parseInt(n);
+    if (num >= 11 && num <= 48) divergentes.add(num);
+  });
+}
+
+  odontogramaState[id] = new Set([...confirmados]);
+
+  for (const [qid, dentes] of Object.entries(quadrantes)) {
+    const container = document.getElementById(qid + '-' + id);
+    if (!container) continue;
+    container.innerHTML = '';
+    
+    dentes.forEach(num => {
+      const btn = document.createElement('button');
+      btn.className = 'dente-btn';
+      btn.dataset.dente = num;
+
+      const isConfirmado = confirmados.has(num);
+      const isDivergente = divergentes.has(num);
+
+      if (isConfirmado) {
+        btn.classList.add('ja-confirmado');
+        btn.title = 'Ausência confirmada pela IA';
+        // Se ela clicar num já confirmado, ele também desmarca
+        btn.addEventListener('click', () => toggleDente(id, num, btn));
+      } else if (isDivergente) {
+        btn.classList.add('ausente');
+        odontogramaState[id].add(num);
+        btn.title = 'Em divergência — clique para remover se o dente estiver presente';
+        btn.addEventListener('click', () => toggleDente(id, num, btn));
+      } else {
+        btn.title = 'Clique para marcar como ausente';
+        btn.addEventListener('click', () => toggleDente(id, num, btn));
+      }
+
+      btn.innerHTML = '<span class="dente-ico">🦷</span><span class="dente-num">' + num + '</span>';
+      container.appendChild(btn);
+    });
+  }
+}
+
+function toggleDente(id, num, btn) {
+  if (!odontogramaState[id]) odontogramaState[id] = new Set();
+  
+  if (odontogramaState[id].has(num)) {
+    odontogramaState[id].delete(num);
+    btn.classList.remove('ausente');
+    btn.classList.remove('ja-confirmado'); // Remove verde se a doutora disser que o dente existe
+  } else {
+    odontogramaState[id].add(num);
+    btn.classList.add('ausente');
+  }
+  
+  atualizarTextoDenticao(id);
+}
+
+function atualizarTextoDenticao(id) {
+  // No novo sistema de blocos o ID é bloco-ta-{id}-denticao
+  const textarea = document.getElementById('bloco-ta-' + id + '-denticao');
+  if (!textarea) return;
+  const ausentes = [...odontogramaState[id]].sort((a,b) => a-b);
+  if (ausentes.length === 0) {
+    textarea.value = 'Dentição permanente. Sem evidências radiográficas de ausências dentárias.';
+  } else {
+    textarea.value = 'Observa-se a ausência das imagens radiográficas correspondentes aos elementos dentários ' + ausentes.join(', ') + '.';
+  }
+  // Sincroniza com blocosVals para o preview
+  if (window.blocosVals && window.blocosVals[id]) {
+    window.blocosVals[id]['denticao_ausencias'] = textarea.value;
+    atualizarPreview(id);
+  }
+}
+
+
+/* ══════════════════════════════
+   INTERAÇÃO E ENVIO WEBHOOK 2
+══════════════════════════════ */
+
+// 1. Aprovação direta (usa o que está no banco, sem edição)
+// 1. Aprovação direta (usa o que está no banco, sem edição)
+async function aprovarSemEditar(id) {
+    const btnEl = document.getElementById('btnaprovar-' + id);
+    const l = window.laudosDict[id];
+    
+    // Função que arranca os bullets (pontinhos) problemáticos
+    const limparBullet = (texto) => typeof texto === 'string' ? texto.replace(/[\u2022\u2023\u25E6\u2043\u2219]/g, '').trim() : texto;
+    
+    let achados = l.achados_radiograficos;
+    if (typeof achados === 'string') { try { achados = JSON.parse(achados); } catch(e) { achados = {}; } }
+    
+    // Ocultar alertas [ATENÇÃO DRA] do texto original
+    if (achados.denticao_ausencias) {
+        achados.denticao_ausencias = achados.denticao_ausencias.replace(/\[ATENÇÃO DRA.*?\]/g, '').trim();
+    }
+    
+    let imp = l.impressao_radiografica;
+    if (typeof imp === 'string') { try { imp = JSON.parse(imp); } catch(e) { imp = [imp]; } }
+    if (Array.isArray(imp)) imp = imp.map(limparBullet); // Limpa a impressão
+    
+    let rec = l.recomendacoes_orthox;
+    if (typeof rec === 'string') { try { rec = JSON.parse(rec); } catch(e) { rec = [rec]; } }
+    if (Array.isArray(rec)) rec = rec.map(limparBullet); // Limpa a recomendação
+
+    const pacote = {
+        laudo_id: id,
+        nomePaciente: l.nome_paciente,
+        osNum: l.os,
+        dentista: l.dentista,
+        dataExame: l.data_exame,
+        tipoExame: l.tipo_exame,
+        dataNasc: l.data_nasc,
+        sexo: l.sexo,
+        queixa: l.queixa,
+        nivel_dificuldade: l.nivel_dificuldade,
+        achados_radiograficos: achados,
+        impressao_radiografica: imp,
+        recomendacoes_orthox: rec
+    };
+
+    await dispararWebhookReprint(id, pacote, btnEl, 'Aprovando...');
+}
+
+
+
+// Função central que empacota e envia para o Webhook 2 (Seguro)
+async function dispararWebhookReprint(id, payload, btnEl, loadingText) {
+    btnEl.disabled = true;
+    const textoOriginal = btnEl.innerHTML;
+    btnEl.innerHTML = loadingText;
+    aprovadosEm[id] = Date.now(); 
+
+    try {
+        const res = await fetch(CFG.webhookReprint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-orthox-token': CFG.orthoXToken
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) throw new Error('Erro na comunicação com o servidor n8n');
+
+        buscarValidacoes();
+        buscarLaudos();
+    } catch (err) {
+        alert('Erro ao processar: ' + err.message);
+        btnEl.disabled = false;
+        btnEl.innerHTML = textoOriginal;
+    }
+}
+
+function esc(s) {
+  return String(s||'')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ── INIT ── */
+document.getElementById('dataExame').valueAsDate = new Date();
+atualizarReadout();
+</script>
+</body>
+</html>
