@@ -409,6 +409,21 @@ select option{background:#fff;color:var(--text)}
   background: #fff;
 }
 
+
+/* V6.3 FIELDS */
+.laudo-v63{margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+.laudo-v63-header{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.12em;color:var(--text-3);text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.laudo-v63-header::after{content:'';flex:1;height:1px;background:var(--border)}
+.laudo-v63-stats{display:flex;gap:12px;margin-bottom:10px;flex-wrap:wrap}
+.laudo-v63-stat{font-family:'DM Mono',monospace;font-size:10px;color:var(--text-3);display:flex;align-items:center;gap:6px}
+.laudo-v63-stat strong{color:var(--text)}
+.laudo-artefatos{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px;margin-top:8px}
+.laudo-art{font-size:11px;padding:6px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);display:flex;align-items:center;gap:6px;color:var(--text-2);transition:background .2s,border-color .2s;text-decoration:none}
+.laudo-art:hover{background:#fff;border-color:var(--red-mid);color:var(--red-mid)}
+.laudo-art-num{font-family:'Barlow Condensed',sans-serif;font-weight:700;color:var(--text-3);min-width:14px}
+.laudo-art:hover .laudo-art-num{color:var(--red-mid)}
+.laudo-drive-btn{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);text-decoration:none;font-size:12px;font-weight:500;transition:background .2s,border-color .2s;margin-top:8px}
+.laudo-drive-btn:hover{background:#fff;border-color:var(--red-mid);color:var(--red-mid)}
 </style>
 </head>
 <body>
@@ -837,6 +852,35 @@ function renderLaudos(lista) {
       : precisaValidacao(l)
         ? `<span style="position:absolute;top:10px;right:10px;font-family:'DM Mono',monospace;font-size:9px;background:var(--warning-border);color:#fff;padding:2px 7px;border-radius:3px;letter-spacing:.06em">⚠ VALIDAR</span>`
         : (isNovo ? '<span class="laudo-new">NOVO</span>' : '');
+    // V6.3 fields (opcional)
+    const hasV63 = l.artefatos || l.drive_folder_url || l.processamento_duracao_segundos;
+    let v63Html = '';
+    if (hasV63) {
+      v63Html = '<div class="laudo-v63">';
+      v63Html += '<div class="laudo-v63-header">Pipeline V6.3</div>';
+      v63Html += '<div class="laudo-v63-stats">';
+      if (l.processamento_duracao_segundos) {
+        v63Html += `<div class="laudo-v63-stat">⏱️ <strong>${Math.round(l.processamento_duracao_segundos)}s</strong></div>`;
+      }
+      if (l.artefatos && Array.isArray(l.artefatos)) {
+        v63Html += `<div class="laudo-v63-stat">📦 <strong>${l.artefatos.length}</strong> artefatos</div>`;
+      }
+      v63Html += '</div>';
+      if (l.drive_folder_url) {
+        v63Html += `<a class="laudo-drive-btn" href="${esc(l.drive_folder_url)}" target="_blank">📁 Pasta Drive</a>`;
+      }
+      if (l.artefatos && Array.isArray(l.artefatos) && l.artefatos.length > 0) {
+        v63Html += '<div class="laudo-artefatos">';
+        l.artefatos.slice(0,9).forEach(art => {
+          const artUrl = art.url || '#';
+          const artNome = art.nome || 'Artefato';
+          const artOrdem = art.ordem || '?';
+          v63Html += `<a class="laudo-art" href="${esc(artUrl)}" target="_blank" title="${esc(artNome)}"><span class="laudo-art-num">#${artOrdem}</span>${esc(artNome.substring(0,20))}</a>`;
+        });
+        v63Html += '</div>';
+      }
+      v63Html += '</div>';
+    }
     return `
     <div class="laudo-row">
       ${statusBadge}
@@ -848,6 +892,7 @@ function renderLaudos(lista) {
           <span class="laudo-chip">Doutor(a) <span>${esc(l.dentista || '—')}</span></span>
           <span class="laudo-chip">Recebido <span>${dt}</span></span>
         </div>
+        ${v63Html}
       </div>
       ${btnHtml}
     </div>`;
