@@ -1,0 +1,904 @@
+{
+  "age_group": "18-30",
+  "population": "brasileira_mista",
+  "reference_atlas": "Villela et al. 2017 (n=3847)",
+  "schema_version": "v22",
+  "coordinate_system": {
+    "origin": "top_left",
+    "x_range": [
+      0.0,
+      1.0
+    ],
+    "y_range": [
+      0.0,
+      1.0
+    ],
+    "notes": "cx,cy: centroide normalizado. x,y: canto superior esquerdo da bounding box. w,h: largura e altura normalizadas."
+  },
+  "distortion_classes_modeled": [
+    "D1",
+    "D2",
+    "D3",
+    "D4",
+    "D5",
+    "D6",
+    "D7"
+  ],
+  "distortion_legend": {
+    "D1": "Magnificação +15% molares superiores (projeção angular divergente)",
+    "D2": "Alongamento por angulação vertical excessiva",
+    "D3": "Encurtamento por angulação vertical insuficiente",
+    "D4": "Sobreposição radicular por angulação horizontal inadequada",
+    "D5": "Blur de movimento — incisivos inferiores",
+    "D6": "Ghost image — artefato de estruturas contralaterais",
+    "D7": "Magnificação variável região anterior (magnificação diferencial)"
+  },
+  "spee_curve_params": {
+    "upper": {
+      "a": -0.8253,
+      "b": 0.8253,
+      "c": 0.2647
+    },
+    "lower": {
+      "a": -0.8253,
+      "b": 0.8253,
+      "c": 0.5037
+    },
+    "modifier": 0.375,
+    "notes": "V22 18-30: ÷8 (-800%) ×3 (+200%) = ×0.375 total"
+  },
+  "quadrants": {
+    "UR": {
+      "fdis": [
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18
+      ],
+      "region": "upper_right"
+    },
+    "UL": {
+      "fdis": [
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28
+      ],
+      "region": "upper_left"
+    },
+    "LL": {
+      "fdis": [
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38
+      ],
+      "region": "lower_left"
+    },
+    "LR": {
+      "fdis": [
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48
+      ],
+      "region": "lower_right"
+    }
+  },
+  "teeth_count": 32,
+  "teeth": [
+    {
+      "fdi_id": "11",
+      "label": "central_incisor_upper_right",
+      "quadrant": "UR",
+      "status": "expected_present",
+      "eruption_prob": 1.0,
+      "distortions_applied": [
+        "D7"
+      ],
+      "centroid": {
+        "cx": 0.48432000000000003,
+        "cy": 0.470862
+      },
+      "bbox": {
+        "x": 0.4727215154007086,
+        "y": 0.390363,
+        "w": 0.023196969198582818,
+        "h": 0.16099689437998485
+      },
+      "variance_envelope": {
+        "cx_sigma": 0.006,
+        "cy_sigma": 0.01,
+        "w_sigma": 0.003,
+        "h_sigma": 0.005
+      }
+    },
+    {
+      "fdi_id": "12",
+      "label": "lateral_incisor_upper_right",
+      "quadrant": "UR",
+      "status": "expected_present",
+      "eruption_prob": 1.0,
+      "distortions_applied": [
+        "D7"
+      ],
+      "centroid": {
+        "cx": 0.456,
+        "cy": 0.469467
+      },
+      "bbox": {
+        "x": 0.44835264751695075,
+        "y": 0.400149,
+        "w": 0.015294704966098562,
+        "h": 0.13863621460498696
+      },
+      "variance_envelope": {
+        "cx_sigma": 0.007,
+        "cy_sigma": 0.011,
+        "w_sigma": 0.003,
+        "h_sigma": 0.006
+      }
+    },
+    {
+      "fdi_id": "13",
+      "label": "canine_upper_right",
+      "quadrant": "UR",
+      "status": "expected_present",
+      "eruption_prob": 1.0,
+      "distortions_applied": [],
+      "centroid": {
+        "cx": 0.4308,
+        "cy": 0.467112
+      },
+      "bbox": {
+        "x": 0.4225153681433633,
+        "y": 0.391086,
+        "w": 0.01656926371327344,
+        "h": 0.15205262246998572
+      },
+      "variance_envelope": {
+        "cx_sigma": 0.009,
+        "cy_sigma": 0.013,
+        "w_sigma": 0.004,
+        "h_sigma": 0.007
+      }
+    },
+    {
+      "fdi_id": "14",
+      "label": "premolar1_upper_right",
+      "quadrant": "UR",
+      "status": "expected_present",
+      "eruption_prob": 1.0,
+      "distortions_applied": [],
+      "centroid": {
+        "cx": 0.4152,
+        "cy": 0.46513
+      },
+      "bbox": {
+        "x": 0.4056408093961884,
+        "y": 0.398048,
+        "w": 0.0191183812076232,
+        "h": 0.1341640786499874
+      },
+      "variance_envelope": {
+        "cx_sigma": 0.011,
+        "cy_sigma": 0.014,
+        "w_sigma": 0.005,
+        "h_sigma": 0.007
+      }
+    },
+    {
+      "fdi_id": "15",
+      "label": "premolar2_upper_right",
+      "quadrant": "UR",
+      "status": "expected_present",
+      "eruption_prob": 1.0,
+      "distortions_applied": [],
+      "centroid": {
+        "cx": 0.39,
+        "cy": 0.461078
+      },
+      "bbox": {
+        "x": 0.3804408093961884,
+        "y": 0.396232,
+        "w": 0.0191183812076232,
+        "h": 0.12969194269498782
+      },
+      "variance_envelope": {
+        "cx_sigma": 0.012,
+        "cy_sigma": 0.015,
+        "w_sigma": 0.005,
+        "h_sigma": 0.008
+      }
+    },
+    {
+      "fdi_id": "16",
+      "label": "molar1_upper_right",
+      "quadrant": "UR",
+      "status": "expected_present",
+      "eruption_prob": 1.0,
+      "distortions_applied": [
+        "D1"
+      ],
+      "centroid": {
+        "cx": 0.3528,
+        "cy": 0.453181
+      },
+      "bbox": {
+        "x": 0.33623073628672656,
+        "y": 0.383863,
+        "w": 0.03313852742654688,
+        "h": 0.13863621460498696
+      },
+      "variance_envelope": {
+        "cx_sigma": 0.014,
+        "cy_sigma": 0.016,
+        "w_sigma": 0.007,
+        "h_sigma": 0.009
+      }
+    },
+    {
+      "fdi_id": "17",
+      "label": "molar2_upper_right",
+      "quadrant": "UR",
+      "status": "expected_present",
+      "eruption_prob": 1.0,
+      "distortions_applied": [
+        "D1"
+      ],
+      "centroid": {
+        "cx": 0.31079999999999997,
+        "cy": 0.441521
+      },
+      "bbox": {
+        "x": 0.2955052950339014,
+        "y": 0.374438,
+        "w": 0.030589409932197123,
+        "h": 0.1341640786499874
+      },
+      "variance_envelope": {
+        "cx_sigma": 0.016,
+        "cy_sigma": 0.018,
+        "w_sigma": 0.008,
+        "h_sigma": 0.01
+      }
+    },
+    {
+      "fdi_id": "18",
+      "label": "molar3_upper_right",
+      "quadrant": "UR",
+      "status": "expected_partial",
+      "eruption_prob": 0.63,
+      "distortions_applied": [
+        "D1"
+      ],
+      "centroid": {
+        "cx": 0.26280000000000003,
+        "cy": 0.424628
+      },
+      "bbox": {
+        "x": 0.2481425744074889,
+        "y": 0.359782,
+        "w": 0.02931485118502224,
+        "h": 0.12969194269498782
+      },
+      "variance_envelope": {
+        "cx_sigma": 0.0261,
+        "cy_sigma": 0.0284,
+        "w_sigma": 0.0142,
+        "h_sigma": 0.0166
+      }
+    },
+    {
+      "fdi_id": "21",
+      "label": "central_incisor_upper_left",
+      "quadrant": "UL",
+      "status": "expected_present",
+      "eruption_prob": 1.0,
+      "distortions_applied": [
+        "D7"
+      ],
+      "centroid": {
+        "cx": 0.51168,
+        "cy": 0.470952
+      },
+      "bbox": {
+        "x": 0.5000815154007087,
+        "y": 0.390454,
+        "w": 0.023196969198582818,
+        "h": 0.16099689437998485
+      },
+      "variance_envelope": {
+        "cx_sigma": 0.006,
+        "cy_sigma": 0.01,
+        "w_sigma": 0.003,
+        "h_sigma": 0.005
+      }
+    },
+    {
+      "fdi_id": "22",
+      "label": "lateral_incisor_upper_left",
+      "quadrant": "UL",
+      "status": "expected_present",
+      "eruption_prob": 1.0,
+      "distortions_applied": [
+        "D7"
+      ],
+      "centroid": {
+        "cx": 0.5399999999999999,
+        "cy": 0.469744
+      },
+      "bbox": {
+        "x": 0.5323526475169507,
+        "y": 0.400426,
+        "w": 0.015294704966098562,
+        "h": 0.13863621460498696
+      },
+      "variance_envelope": {
+        "cx_sigma": 0.007,
+        "cy_sigma": 0.011,
+        "w_sigma": 0.003,
+        "h_sigma": 0.006
+      }
+    },
+    {
+      "fdi_id": "23",
+      "label": "canine_upper_left",
+      "quadrant": "UL",
+      "status": "expected_present",
+      "eruption_prob": 1.0,
+      "distortions_applied": [],
+      "centroid": {
+        "cx": 0.5532,
+        "cy": 0.468729
+      },
+      "bbox": {
+        "x": 0.5449153681433633,
+        "y": 0.392702,
+        "w": 0.01656926371327344,
+        "h": 0.15205262246998572
+      },
+      "variance_envelope": {
+        "cx_sigma": 0.009,
+        "cy_sigma": 0.013,
+        "w_sigma": 0.004,
+        "h_sigma": 0.007
+      }
+    },
+    {
+      "fdi_id": "24",
+      "label": "premolar1_upper_left",
+      "quadrant": "UL",
+      "status": "expected_present",
+      "eruption_prob": 1.0,
+      "distortions_applied": [],
+      "centroid": {
+        "cx": 0.5748,
+        "cy": 0.466447
+      },
+      "bbox": {
+        "x": 0.5652408093961884,
+        "y": 0.399365,
+        "w": 0.0191183812076232,
+        "h": 0.1341640786499874
+      },
+      "variance_envelope": {
+        "cx_sigma": 0.011,
+        "cy_sigma": 0.014,
+        "w_sigma": 0.005,
+        "h_sigma": 0.007
+      }
+    },
+    {
+      "fdi_id": "25",
+      "label": "premolar2_upper_left",
+      "quadrant": "UL",
+      "status": "expected_present",
+      "eruption_prob": 1.0,
+      "distortions_applied": [],
+      "centroid": {
+        "cx": 0.606,
+        "cy": 0.461791
+      },
+      "bbox": {
+        "x": 0.5964408093961884,
+        "y": 0.396945,
+        "w": 0.0191183812076232,
+        "h": 0.12969194269498782
+      },
+      "variance_envelope": {
+        "cx_sigma": 0.012,
+        "cy_sigma": 0.015,
+        "w_sigma": 0.005,
+        "h_sigma": 0.008
+      }
+    },
+    {
+      "fdi_id": "26",
+      "label": "molar1_upper_left",
+      "quadrant": "UL",
+      "status": "expected_present",
+      "eruption_prob": 1.0,
+      "distortions_applied": [
+        "D1"
+      ],
+      "centroid": {
+        "cx": 0.6432,
+        "cy": 0.45414
+      },
+      "bbox": {
+        "x": 0.6266307362867265,
+        "y": 0.384822,
+        "w": 0.03313852742654688,
+        "h": 0.13863621460498696
+      },
+      "variance_envelope": {
+        "cx_sigma": 0.014,
+        "cy_sigma": 0.016,
+        "w_sigma": 0.007,
+        "h_sigma": 0.009
+      }
+    },
+    {
+      "fdi_id": "27",
+      "label": "molar2_upper_left",
+      "quadrant": "UL",
+      "status": "expected_present",
+      "eruption_prob": 1.0,
+      "distortions_applied": [
+        "D1"
+      ],
+      "centroid": {
+        "cx": 0.6852,
+        "cy": 0.442757
+      },
+      "bbox": {
+        "x": 0.6699052950339015,
+        "y": 0.375674,
+        "w": 0.030589409932197123,
+        "h": 0.1341640786499874
+      },
+      "variance_envelope": {
+        "cx_sigma": 0.016,
+        "cy_sigma": 0.018,
+        "w_sigma": 0.008,
+        "h_sigma": 0.01
+      }
+    },
+    {
+      "fdi_id": "28",
+      "label": "molar3_upper_left",
+      "quadrant": "UL",
+      "status": "expected_partial",
+      "eruption_prob": 0.63,
+      "distortions_applied": [
+        "D1"
+      ],
+      "centroid": {
+        "cx": 0.7272,
+        "cy": 0.428461
+      },
+      "bbox": {
+        "x": 0.7125425744074888,
+        "y": 0.363615,
+        "w": 0.02931485118502224,
+        "h": 0.12969194269498782
+      },
+      "variance_envelope": {
+        "cx_sigma": 0.0261,
+        "cy_sigma": 0.0284,
+        "w_sigma": 0.0142,
+        "h_sigma": 0.0166
+      }
+    },
+    {
+      "fdi_id": "31",
+      "label": "central_incisor_lower_left",
+      "quadrant": "LL",
+      "status": "expected_present",
+      "eruption_prob": 1.0,
+      "distortions_applied": [
+        "D5"
+      ],
+      "centroid": {
+        "cx": 0.5095927316234741,
+        "cy": 0.709937
+      },
+      "bbox": {
+        "x": 0.5,
+        "y": 0.640619,
+        "w": 0.019185463246948194,
+        "h": 0.13863621460498696
+      },
+      "variance_envelope": {
+        "cx_sigma": 0.006,
+        "cy_sigma": 0.013,
+        "w_sigma": 0.003,
+        "h_sigma": 0.005
+      }
+    },
+    {
+      "fdi_id": "32",
+      "label": "lateral_incisor_lower_left",
+      "quadrant": "LL",
+      "status": "expected_present",
+      "eruption_prob": 1.0,
+      "distortions_applied": [
+        "D5"
+      ],
+      "centroid": {
+        "cx": 0.5316,
+        "cy": 0.709189
+      },
+      "bbox": {
+        "x": 0.5242209756742506,
+        "y": 0.642107,
+        "w": 0.014758048651498611,
+        "h": 0.1341640786499874
+      },
+      "variance_envelope": {
+        "cx_sigma": 0.007,
+        "cy_sigma": 0.014,
+        "w_sigma": 0.003,
+        "h_sigma": 0.006
+      }
+    },
+    {
+      "fdi_id": "33",
+      "label": "canine_lower_left",
+      "quadrant": "LL",
+      "status": "expected_present",
+      "eruption_prob": 1.0,
+      "distortions_applied": [],
+      "centroid": {
+        "cx": 0.5519999999999999,
+        "cy": 0.707781
+      },
+      "bbox": {
+        "x": 0.5436147450843757,
+        "y": 0.635109,
+        "w": 0.016770509831248424,
+        "h": 0.14534441853748634
+      },
+      "variance_envelope": {
+        "cx_sigma": 0.009,
+        "cy_sigma": 0.013,
+        "w_sigma": 0.004,
+        "h_sigma": 0.007
+      }
+    },
+    {
+      "fdi_id": "34",
+      "label": "premolar1_lower_left",
+      "quadrant": "LL",
+      "status": "expected_present",
+      "eruption_prob": 1.0,
+      "distortions_applied": [],
+      "centroid": {
+        "cx": 0.5748,
+        "cy": 0.705395
+      },
+      "bbox": {
+        "x": 0.5654085144945009,
+        "y": 0.642785,
+        "w": 0.018782971010998233,
+        "h": 0.12521980673998823
+      },
+      "variance_envelope": {
+        "cx_sigma": 0.011,
+        "cy_sigma": 0.014,
+        "w_sigma": 0.005,
+        "h_sigma": 0.007
+      }
+    },
+    {
+      "fdi_id": "35",
+      "label": "premolar2_lower_left",
+      "quadrant": "LL",
+      "status": "expected_present",
+      "eruption_prob": 1.0,
+      "distortions_applied": [],
+      "centroid": {
+        "cx": 0.606,
+        "cy": 0.700739
+      },
+      "bbox": {
+        "x": 0.5966085144945009,
+        "y": 0.639247,
+        "w": 0.018782971010998233,
+        "h": 0.12298373876248844
+      },
+      "variance_envelope": {
+        "cx_sigma": 0.012,
+        "cy_sigma": 0.015,
+        "w_sigma": 0.005,
+        "h_sigma": 0.008
+      }
+    },
+    {
+      "fdi_id": "36",
+      "label": "molar1_lower_left",
+      "quadrant": "LL",
+      "status": "expected_present",
+      "eruption_prob": 1.0,
+      "distortions_applied": [],
+      "centroid": {
+        "cx": 0.6432,
+        "cy": 0.693088
+      },
+      "bbox": {
+        "x": 0.6271003105620016,
+        "y": 0.626006,
+        "w": 0.03219937887599697,
+        "h": 0.1341640786499874
+      },
+      "variance_envelope": {
+        "cx_sigma": 0.014,
+        "cy_sigma": 0.016,
+        "w_sigma": 0.007,
+        "h_sigma": 0.009
+      }
+    },
+    {
+      "fdi_id": "37",
+      "label": "molar2_lower_left",
+      "quadrant": "LL",
+      "status": "expected_present",
+      "eruption_prob": 1.0,
+      "distortions_applied": [],
+      "centroid": {
+        "cx": 0.6852,
+        "cy": 0.681704
+      },
+      "bbox": {
+        "x": 0.6697711309552514,
+        "y": 0.616858,
+        "w": 0.0308577380894971,
+        "h": 0.12969194269498782
+      },
+      "variance_envelope": {
+        "cx_sigma": 0.016,
+        "cy_sigma": 0.018,
+        "w_sigma": 0.008,
+        "h_sigma": 0.01
+      }
+    },
+    {
+      "fdi_id": "38",
+      "label": "molar3_lower_left",
+      "quadrant": "LL",
+      "status": "expected_partial",
+      "eruption_prob": 0.68,
+      "distortions_applied": [],
+      "centroid": {
+        "cx": 0.7272,
+        "cy": 0.667409
+      },
+      "bbox": {
+        "x": 0.7124419513485013,
+        "y": 0.605917,
+        "w": 0.029516097302997223,
+        "h": 0.12298373876248844
+      },
+      "variance_envelope": {
+        "cx_sigma": 0.0255,
+        "cy_sigma": 0.0278,
+        "w_sigma": 0.0139,
+        "h_sigma": 0.0162
+      }
+    },
+    {
+      "fdi_id": "41",
+      "label": "central_incisor_lower_right",
+      "quadrant": "LR",
+      "status": "expected_present",
+      "eruption_prob": 1.0,
+      "distortions_applied": [
+        "D5"
+      ],
+      "centroid": {
+        "cx": 0.49040726837652593,
+        "cy": 0.709937
+      },
+      "bbox": {
+        "x": 0.48081453675305186,
+        "y": 0.640619,
+        "w": 0.019185463246948194,
+        "h": 0.13863621460498696
+      },
+      "variance_envelope": {
+        "cx_sigma": 0.006,
+        "cy_sigma": 0.013,
+        "w_sigma": 0.003,
+        "h_sigma": 0.005
+      }
+    },
+    {
+      "fdi_id": "42",
+      "label": "lateral_incisor_lower_right",
+      "quadrant": "LR",
+      "status": "expected_present",
+      "eruption_prob": 1.0,
+      "distortions_applied": [
+        "D5"
+      ],
+      "centroid": {
+        "cx": 0.4584,
+        "cy": 0.708584
+      },
+      "bbox": {
+        "x": 0.45102097567425065,
+        "y": 0.641502,
+        "w": 0.014758048651498611,
+        "h": 0.1341640786499874
+      },
+      "variance_envelope": {
+        "cx_sigma": 0.007,
+        "cy_sigma": 0.014,
+        "w_sigma": 0.003,
+        "h_sigma": 0.006
+      }
+    },
+    {
+      "fdi_id": "43",
+      "label": "canine_lower_right",
+      "quadrant": "LR",
+      "status": "expected_present",
+      "eruption_prob": 1.0,
+      "distortions_applied": [],
+      "centroid": {
+        "cx": 0.438,
+        "cy": 0.70684
+      },
+      "bbox": {
+        "x": 0.4296147450843758,
+        "y": 0.634168,
+        "w": 0.016770509831248424,
+        "h": 0.14534441853748634
+      },
+      "variance_envelope": {
+        "cx_sigma": 0.009,
+        "cy_sigma": 0.013,
+        "w_sigma": 0.004,
+        "h_sigma": 0.007
+      }
+    },
+    {
+      "fdi_id": "44",
+      "label": "premolar1_lower_right",
+      "quadrant": "LR",
+      "status": "expected_present",
+      "eruption_prob": 1.0,
+      "distortions_applied": [],
+      "centroid": {
+        "cx": 0.4152,
+        "cy": 0.704078
+      },
+      "bbox": {
+        "x": 0.4058085144945009,
+        "y": 0.641468,
+        "w": 0.018782971010998233,
+        "h": 0.12521980673998823
+      },
+      "variance_envelope": {
+        "cx_sigma": 0.011,
+        "cy_sigma": 0.014,
+        "w_sigma": 0.005,
+        "h_sigma": 0.007
+      }
+    },
+    {
+      "fdi_id": "45",
+      "label": "premolar2_lower_right",
+      "quadrant": "LR",
+      "status": "expected_present",
+      "eruption_prob": 1.0,
+      "distortions_applied": [],
+      "centroid": {
+        "cx": 0.39,
+        "cy": 0.700026
+      },
+      "bbox": {
+        "x": 0.3806085144945009,
+        "y": 0.638534,
+        "w": 0.018782971010998233,
+        "h": 0.12298373876248844
+      },
+      "variance_envelope": {
+        "cx_sigma": 0.012,
+        "cy_sigma": 0.015,
+        "w_sigma": 0.005,
+        "h_sigma": 0.008
+      }
+    },
+    {
+      "fdi_id": "46",
+      "label": "molar1_lower_right",
+      "quadrant": "LR",
+      "status": "expected_present",
+      "eruption_prob": 1.0,
+      "distortions_applied": [],
+      "centroid": {
+        "cx": 0.3528,
+        "cy": 0.692129
+      },
+      "bbox": {
+        "x": 0.3367003105620015,
+        "y": 0.625047,
+        "w": 0.03219937887599697,
+        "h": 0.1341640786499874
+      },
+      "variance_envelope": {
+        "cx_sigma": 0.014,
+        "cy_sigma": 0.016,
+        "w_sigma": 0.007,
+        "h_sigma": 0.009
+      }
+    },
+    {
+      "fdi_id": "47",
+      "label": "molar2_lower_right",
+      "quadrant": "LR",
+      "status": "expected_present",
+      "eruption_prob": 1.0,
+      "distortions_applied": [],
+      "centroid": {
+        "cx": 0.31079999999999997,
+        "cy": 0.680468
+      },
+      "bbox": {
+        "x": 0.2953711309552514,
+        "y": 0.615622,
+        "w": 0.0308577380894971,
+        "h": 0.12969194269498782
+      },
+      "variance_envelope": {
+        "cx_sigma": 0.016,
+        "cy_sigma": 0.018,
+        "w_sigma": 0.008,
+        "h_sigma": 0.01
+      }
+    },
+    {
+      "fdi_id": "48",
+      "label": "molar3_lower_right",
+      "quadrant": "LR",
+      "status": "expected_partial",
+      "eruption_prob": 0.68,
+      "distortions_applied": [],
+      "centroid": {
+        "cx": 0.26880000000000004,
+        "cy": 0.665895
+      },
+      "bbox": {
+        "x": 0.25404195134850144,
+        "y": 0.604404,
+        "w": 0.029516097302997223,
+        "h": 0.12298373876248844
+      },
+      "variance_envelope": {
+        "cx_sigma": 0.0255,
+        "cy_sigma": 0.0278,
+        "w_sigma": 0.0139,
+        "h_sigma": 0.0162
+      }
+    }
+  ],
+  "notes": "Dentição permanente completa, baseline populacional brasileiro. Terceiros molares erupcionados ou impactados (eruption_prob≈0.68 superiores, ≈0.74 inferiores). Referência primária — parâmetros centrais do atlas Villela et al. 2017. Distorções D1,D5,D7 incorporadas."
+}
