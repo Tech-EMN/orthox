@@ -1056,6 +1056,48 @@ const BLOCOS_DEF = [
 window.blocosState = {};   // { [id]: { [key]: 'pendente'|'confirmado'|'editado' } }
 window.blocosOpen  = {};   // { [id]: Set de keys abertas }
 
+// FIX 2026-05-27 (Issue #1): renderizar artefatos V6.3/V6.4 na tela de validação.
+function renderArtefatosBlock(l) {
+  const hasV63 = (l.artefatos && Array.isArray(l.artefatos) && l.artefatos.length > 0) || l.drive_folder_url;
+  if (!hasV63) return '';
+
+  const dur = (typeof l.processamento_duracao_segundos === 'number')
+    ? `<span class="laudo-v63-stat">⏱️ <strong>${l.processamento_duracao_segundos.toFixed(0)}s</strong></span>`
+    : '';
+  const countArt = Array.isArray(l.artefatos) ? l.artefatos.length : 0;
+  const stat = countArt > 0
+    ? `<span class="laudo-v63-stat">📦 <strong>${countArt}</strong> artefatos</span>`
+    : '';
+  const folder = l.drive_folder_url
+    ? `<a class="laudo-drive-btn" href="${esc(l.drive_folder_url)}" target="_blank" rel="noopener">📁 Pasta Drive</a>`
+    : '';
+
+  let gridHtml = '';
+  if (countArt > 0) {
+    gridHtml = '<div class="laudo-artefatos" style="margin-top:8px">';
+    l.artefatos.slice(0, 9).forEach(art => {
+      const ordem = (art && (art.ordem != null)) ? `#${art.ordem} ` : '';
+      const nome = esc((art && art.nome) || 'Artefato');
+      const url = (art && art.url) || (art && art.drive_file_id ? `https://drive.google.com/file/d/${art.drive_file_id}/view` : '');
+      if (!url) return;
+      gridHtml += `<a class="laudo-art" href="${esc(url)}" target="_blank" rel="noopener" title="${esc((art && art.descricao) || '')}">${ordem}${nome}</a>`;
+    });
+    gridHtml += '</div>';
+  }
+
+  return `
+      <details class="laudo-v63-block" style="margin-top:10px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">
+        <summary style="cursor:pointer;display:flex;align-items:center;gap:12px;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.05em;color:var(--text-2)">
+          <strong style="color:var(--text)">Artefatos de Análise</strong>
+          ${stat}
+          ${dur}
+          ${folder}
+        </summary>
+        ${gridHtml}
+      </details>
+  `;
+}
+
 function renderValidacoes(lista) {
   const el = document.getElementById('valList');
   const pendentes = lista.filter(l => precisaValidacao(l));
@@ -1102,6 +1144,8 @@ function renderValidacoes(lista) {
         <strong>${aprovado ? '✓ Validação concluída' : '⚠ Atenção — Revisão necessária'}</strong>
         <span class="val-alert-text">${esc(divergencia)}</span>
       </div>
+
+      ${renderArtefatosBlock(l)}
 
       ${aprovado ? `
         <div class="val-actions">
@@ -1416,7 +1460,50 @@ async function finalizarLaudo(id) {
     recomendacoes_orthox:   (v._recomendacoes || '').split('\n').map(limpar).filter(x => x),
   };
 
-  await dispararWebhookReprint(id, pacote, btnEl, 'Gerando PDF...');
+  // FIX 2026-05-27 (Issue #3): persistir via Supabase PATCH ao invés de webhook inexistente.
+  // PDF original mantido; edições de texto são salvas direto no banco.
+  btnEl.disabled = true;
+  const textoOriginal = btnEl.innerHTML;
+  btnEl.innerHTML = 'Salvando...';
+  aprovadosEm[id] = Date.now();
+
+  try {
+    const updatePayload = {
+      status: 'Aprovado',
+      achados_radiograficos: pacote.achados_radiograficos,
+      impressao_radiografica: pacote.impressao_radiografica,
+      recomendacoes_orthox: pacote.recomendacoes_orthox,
+      validado_em: new Date().toISOString()
+    };
+
+    const res = await fetch(`${CFG.supabaseUrl}/rest/v1/${CFG.tabela}?id=eq.${id}`, {
+      method: 'PATCH',
+      headers: {
+        'apikey': CFG.supabaseKey,
+        'Authorization': 'Bearer ' + CFG.supabaseKey,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation'
+      },
+      body: JSON.stringify(updatePayload)
+    });
+
+    if (!res.ok) {
+      const errText = await res.text().catch(() => '');
+      throw new Error('Falha ao salvar (HTTP ' + res.status + '): ' + (errText || res.statusText));
+    }
+
+    const updated = await res.json().catch(() => null);
+    if (!Array.isArray(updated) || updated.length === 0) {
+      throw new Error('Edições não confirmadas pelo banco — registro não encontrado.');
+    }
+
+    buscarValidacoes();
+    buscarLaudos();
+  } catch (err) {
+    alert('Erro ao processar: ' + err.message);
+    btnEl.disabled = false;
+    btnEl.innerHTML = textoOriginal;
+  }
 }
 
 
@@ -1553,48 +1640,73 @@ function atualizarTextoDenticao(id) {
    INTERAÇÃO E ENVIO WEBHOOK 2
 ══════════════════════════════ */
 
-// 1. Aprovação direta (usa o que está no banco, sem edição)
-// 1. Aprovação direta (usa o que está no banco, sem edição)
+// 1. Aprovação direta (atualiza Supabase diretamente, sem regenerar PDF)
+// FIX 2026-05-27 (Issue #3): aprovação via PATCH Supabase ao invés de webhook inexistente
 async function aprovarSemEditar(id) {
     const btnEl = document.getElementById('btnaprovar-' + id);
     const l = window.laudosDict[id];
-    
+
     // Função que arranca os bullets (pontinhos) problemáticos
     const limparBullet = (texto) => typeof texto === 'string' ? texto.replace(/[\u2022\u2023\u25E6\u2043\u2219]/g, '').trim() : texto;
-    
+
     let achados = l.achados_radiograficos;
     if (typeof achados === 'string') { try { achados = JSON.parse(achados); } catch(e) { achados = {}; } }
-    
+
     // Ocultar alertas [ATENÇÃO DRA] do texto original
     if (achados.denticao_ausencias) {
         achados.denticao_ausencias = achados.denticao_ausencias.replace(/\[ATENÇÃO DRA.*?\]/g, '').trim();
     }
-    
+
     let imp = l.impressao_radiografica;
     if (typeof imp === 'string') { try { imp = JSON.parse(imp); } catch(e) { imp = [imp]; } }
-    if (Array.isArray(imp)) imp = imp.map(limparBullet); // Limpa a impressão
-    
+    if (Array.isArray(imp)) imp = imp.map(limparBullet);
+
     let rec = l.recomendacoes_orthox;
     if (typeof rec === 'string') { try { rec = JSON.parse(rec); } catch(e) { rec = [rec]; } }
-    if (Array.isArray(rec)) rec = rec.map(limparBullet); // Limpa a recomendação
+    if (Array.isArray(rec)) rec = rec.map(limparBullet);
 
-    const pacote = {
-        laudo_id: id,
-        nomePaciente: l.nome_paciente,
-        osNum: l.os,
-        dentista: l.dentista,
-        dataExame: l.data_exame,
-        tipoExame: l.tipo_exame,
-        dataNasc: l.data_nasc,
-        sexo: l.sexo,
-        queixa: l.queixa,
-        nivel_dificuldade: l.nivel_dificuldade,
-        achados_radiograficos: achados,
-        impressao_radiografica: imp,
-        recomendacoes_orthox: rec
-    };
+    btnEl.disabled = true;
+    const textoOriginal = btnEl.innerHTML;
+    btnEl.innerHTML = 'Aprovando...';
+    aprovadosEm[id] = Date.now();
 
-    await dispararWebhookReprint(id, pacote, btnEl, 'Aprovando...');
+    try {
+        const updatePayload = {
+            status: 'Aprovado',
+            achados_radiograficos: achados,
+            impressao_radiografica: imp,
+            recomendacoes_orthox: rec,
+            validado_em: new Date().toISOString()
+        };
+
+        const res = await fetch(`${CFG.supabaseUrl}/rest/v1/${CFG.tabela}?id=eq.${id}`, {
+            method: 'PATCH',
+            headers: {
+                'apikey': CFG.supabaseKey,
+                'Authorization': 'Bearer ' + CFG.supabaseKey,
+                'Content-Type': 'application/json',
+                'Prefer': 'return=representation'
+            },
+            body: JSON.stringify(updatePayload)
+        });
+
+        if (!res.ok) {
+            const errText = await res.text().catch(() => '');
+            throw new Error('Falha na aprovação (HTTP ' + res.status + '): ' + (errText || res.statusText));
+        }
+
+        const updated = await res.json().catch(() => null);
+        if (!Array.isArray(updated) || updated.length === 0) {
+            throw new Error('Aprovação não confirmada pelo banco — registro não encontrado.');
+        }
+
+        buscarValidacoes();
+        buscarLaudos();
+    } catch (err) {
+        alert('Erro ao processar: ' + err.message);
+        btnEl.disabled = false;
+        btnEl.innerHTML = textoOriginal;
+    }
 }
 
 
