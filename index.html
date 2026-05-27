@@ -2,6 +2,9 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/orthox-logo-32.png?v=20260527">
+<link rel="icon" type="image/png" sizes="16x16" href="/assets/orthox-logo-16.png?v=20260527">
+<link rel="apple-touch-icon" sizes="192x192" href="/assets/orthox-logo-192.png?v=20260527">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>OrthoX — Análise Radiológica</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -35,7 +38,7 @@ body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;min-
 
 /* TOPBAR */
 .topbar{width:100%;background:#fff;border-bottom:1px solid var(--border);padding:0 40px;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
-.logo-svg{height:38px;width:auto}
+.logo-svg{height:38px;width:auto}.logo-img{height:38px;width:auto;display:block}
 .topbar-right{display:flex;align-items:center;gap:12px}
 .badge{font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;padding:4px 10px;border-radius:3px}
 .badge-atria{color:#888;border:1px solid #DDD}
@@ -429,20 +432,7 @@ select option{background:#fff;color:var(--text)}
 <body>
 
 <div class="topbar">
-  <svg class="logo-svg" viewBox="0 0 290 70" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <linearGradient id="xg" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stop-color="#C0392B"/>
-        <stop offset="100%" stop-color="#E67E22"/>
-      </linearGradient>
-    </defs>
-    <text x="0" y="52" font-family="'Barlow Condensed',sans-serif" font-weight="900" font-size="54" fill="#111111" letter-spacing="-1">ORTHO</text>
-    <text x="196" y="52" font-family="'Barlow Condensed',sans-serif" font-weight="900" font-size="54" fill="url(#xg)">X</text>
-    <text x="1" y="66" font-family="'Barlow',sans-serif" font-weight="300" font-size="10.5" fill="#AAAAAA" letter-spacing="0.7">Radiologia Odontológica</text>
-    <rect x="228" y="6" width="44" height="44" rx="22" fill="none" stroke="url(#xg)" stroke-width="1.5"/>
-    <text x="250" y="30" font-family="'Barlow Condensed',sans-serif" font-weight="900" font-size="17" fill="url(#xg)" text-anchor="middle">30</text>
-    <text x="250" y="44" font-family="'Barlow Condensed',sans-serif" font-weight="700" font-size="8.5" fill="#E67E22" text-anchor="middle" letter-spacing="1">ANOS</text>
-  </svg>
+  <img class="logo-img" src="/assets/orthox-logo-oficial.webp?v=20260527" alt="Ortho X Radiologia Odontológica" height="38" loading="eager" decoding="async">
   <div class="topbar-right">
     <span class="badge badge-mvp">MVP</span>
     <span class="badge badge-atria">by ATRIA</span>
@@ -1003,42 +993,54 @@ async function buscarValidacoes(manual = false) {
 const PDF_TEMPLATE = `<!DOCTYPE html><html><head><meta charset="UTF-8">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
+@page{size:A4;margin:12mm 14mm 12mm 14mm}
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--pr:#B91C1C;--se:#EA580C;--tp:#111827;--ts:#4B5563;--tm:#6B7280;--bo:#D1D5DB;--bg:#F3F4F6}
-body{font-family:'Inter',sans-serif;color:var(--tp);line-height:1.5;padding:20pt 24pt;background:white;font-size:10pt;zoom:0.7}
-.hdr{display:flex;justify-content:space-between;align-items:center;padding-bottom:20pt;margin-bottom:25pt;border-bottom:2.5pt solid var(--pr)}
-.logo{font-weight:800;font-size:28pt;letter-spacing:-1pt;color:var(--tp)}.logo span{color:var(--pr)}
-.osbadge{background:linear-gradient(135deg,var(--pr),var(--se));color:white;padding:8pt 16pt;border-radius:6pt;font-weight:700;font-size:12pt}
-.pb{display:grid;grid-template-columns:repeat(2,1fr);gap:15pt;background:var(--bg);padding:18pt;border-radius:10pt;margin-bottom:30pt;border:1pt solid var(--bo)}
+:root{--red:#B91C1C;--red-mid:#C0392B;--orange:#EA580C;--text-1:#111827;--text-2:#374151;--text-3:#4B5563;--text-muted:#6B7280;--border-lo:#E5E7EB;--border-hi:#D1D5DB;--bg-soft:#F3F4F6}
+body{font-family:'Inter','Helvetica Neue',Arial,sans-serif;color:var(--text-1);line-height:1.5;padding:20pt 24pt;background:white;font-size:10pt;-webkit-font-smoothing:antialiased;zoom:0.7}
+.hdr{display:flex;justify-content:space-between;align-items:center;padding-bottom:10pt;margin-bottom:12pt;border-bottom:2.5pt solid var(--red)}
+.hdr-logo img{height:46pt;width:auto;display:block}
+.hdr-meta{text-align:right}
+.osbadge{display:inline-block;background:linear-gradient(135deg,var(--red),var(--orange));color:white;padding:7pt 14pt;border-radius:6pt;font-weight:700;font-size:11.5pt;letter-spacing:.3pt}
+.doc-title{margin-top:6pt;color:var(--text-3);font-size:9pt;font-weight:600;text-transform:uppercase;letter-spacing:.6pt}
+.pb{display:grid;grid-template-columns:repeat(2,1fr);gap:9pt;background:var(--bg-soft);padding:11pt 14pt;border-radius:8pt;margin-bottom:11pt;border:1pt solid var(--border-lo)}
 .pf{display:flex;flex-direction:column;gap:2pt}.pff{grid-column:span 2}
-.lbl{font-weight:700;text-transform:uppercase;color:var(--tm);font-size:8.5pt;letter-spacing:.5pt}
-.val{color:var(--tp);font-size:11pt;font-weight:600}
-.sec{margin-bottom:25pt}.st{color:var(--pr);font-size:12.5pt;font-weight:800;text-transform:uppercase;letter-spacing:.5pt;padding-bottom:6pt;margin-bottom:12pt;border-bottom:1.5pt solid #FEE2E2}
-.sub{margin-bottom:12pt}.subt{font-weight:700;font-size:10pt;color:var(--tp);margin-bottom:4pt}
-.subc{color:var(--ts);padding-left:12pt;border-left:2pt solid var(--bo)}
-ul{list-style:none;padding-top:5pt}li{padding-left:18pt;position:relative;margin-bottom:8pt}
-li:before{content:"•";color:var(--pr);font-weight:900;position:absolute;left:5pt;font-size:14pt;top:-2pt}
-.sig{text-align:center;margin-top:45pt}.sigl{border-top:1.5pt solid var(--tp);width:220pt;margin:0 auto 10pt}
-.sign{font-weight:800;font-size:12pt}.sigt{color:var(--ts);font-size:10pt;font-weight:500}
-.ftr{margin-top:40pt;padding-top:15pt;border-top:1pt solid var(--bo);display:flex;justify-content:space-between;font-size:9pt;color:var(--tm)}
-.fb{background:var(--bg);padding:4pt 10pt;border-radius:4pt;font-weight:600;border:.5pt solid var(--bo)}
+.lbl{font-weight:700;text-transform:uppercase;color:var(--text-muted);font-size:8.2pt;letter-spacing:.5pt}
+.val{color:var(--text-1);font-size:10.5pt;font-weight:600}
+.rx-wrap{margin-bottom:13pt;padding:8pt;background:#0a0a0a;border-radius:8pt;border:1pt solid var(--border-hi);page-break-inside:avoid;break-inside:avoid}
+.rx-img{width:100%;height:auto;display:block;border-radius:4pt}
+.rx-caption{text-align:center;color:#9CA3AF;font-size:8.2pt;letter-spacing:.5pt;text-transform:uppercase;margin-top:6pt;font-weight:600}
+.sec{margin-bottom:13pt}
+.st{color:var(--red);font-size:12pt;font-weight:800;text-transform:uppercase;letter-spacing:.5pt;padding-bottom:5pt;margin-bottom:10pt;border-bottom:1.5pt solid #FEE2E2;page-break-after:avoid;break-after:avoid}
+.sub{margin-bottom:8pt;page-break-inside:avoid;break-inside:avoid}
+.subt{font-weight:700;font-size:10pt;color:var(--text-1);margin-bottom:3pt}
+.subc{color:var(--text-3);padding-left:11pt;border-left:2pt solid var(--border-lo);font-size:10pt}
+.subc p{margin-bottom:3pt}
+ul{list-style:none;padding-top:3pt}
+li{padding-left:16pt;position:relative;margin-bottom:5pt;color:var(--text-2);font-size:10pt}
+li:before{content:"\u2022";color:var(--red);font-weight:900;position:absolute;left:4pt;font-size:13pt;top:-2pt}
+.sig{text-align:center;margin-top:20pt;page-break-inside:avoid}
+.sigl{border-top:1.5pt solid var(--text-1);width:200pt;margin:0 auto 7pt}
+.sign{font-weight:800;font-size:11.5pt;color:var(--text-1)}
+.sigt{color:var(--text-3);font-size:9.5pt;font-weight:500}
+.ftr{margin-top:18pt;padding-top:9pt;border-top:1pt solid var(--border-lo);display:flex;justify-content:space-between;align-items:center;font-size:8.5pt;color:var(--text-muted)}
+.fb{background:var(--bg-soft);padding:4pt 9pt;border-radius:4pt;font-weight:600;border:.5pt solid var(--border-lo);font-size:8.2pt}
 </style></head><body>
-<div class="hdr"><div class="logo">ORTHO<span>X</span></div><div class="osbadge">OS #{{OS}}</div></div>
+<div class="hdr"><div class="hdr-logo"><img src="{{LOGO_URL}}" alt="Ortho X Radiologia Odontologica"></div><div class="hdr-meta"><div class="osbadge">OS #{{OS}}</div><div class="doc-title">Laudo Radiografico Digital</div></div></div>
 <div class="pb">
   <div class="pf"><span class="lbl">Paciente</span><span class="val">{{PACIENTE}}</span></div>
   <div class="pf"><span class="lbl">Data do Exame</span><span class="val">{{DATA_EXAME}}</span></div>
   <div class="pf"><span class="lbl">Doutor(a) Solicitante</span><span class="val">{{DENTISTA}}</span></div>
   <div class="pf"><span class="lbl">Data de Nascimento</span><span class="val">{{DATA_NASC}}</span></div>
   <div class="pf"><span class="lbl">Sexo</span><span class="val">{{SEXO}}</span></div>
+  <div class="pf"><span class="lbl">Tipo de Exame</span><span class="val">{{TIPO_EXAME}}</span></div>
   {{QUEIXA_BLOCK}}
 </div>
-<div class="sec"><div class="st">Achados Radiográficos</div><div>
-  {{ACHADOS_BLOCKS}}
-</div></div>
-<div class="sec"><div class="st">Impressão Radiográfica</div><ul>{{IMP_ITEMS}}</ul></div>
-<div class="sec"><div class="st">Recomendações Ortho X</div><ul>{{REC_ITEMS}}</ul></div>
-<div class="sig"><div class="sigl"></div><div class="sign">Dra. Gabriela Biagioni</div><div class="sigt">Radiologista Odontológica · Mestre em Estomatologia</div></div>
-<div class="ftr"><span>Ortho X — Radiologia Odontológica Digital</span><span class="fb">Tecnologia OrthoX IA RAG · {{OS}}</span></div>
+{{RADIOGRAFIA_BLOCK}}
+<div class="sec"><div class="st">Achados Radiograficos</div><div>{{ACHADOS_BLOCKS}}</div></div>
+<div class="sec"><div class="st">Impressao Radiografica</div><ul>{{IMP_ITEMS}}</ul></div>
+<div class="sec"><div class="st">Recomendacoes Ortho X</div><ul>{{REC_ITEMS}}</ul></div>
+<div class="sig"><div class="sigl"></div><div class="sign">Dra. Gabriela Biagioni</div><div class="sigt">Radiologista Odontologica &middot; Mestre em Estomatologia</div></div>
+<div class="ftr"><span>Ortho X &mdash; Radiologia Odontologica Digital</span><span class="fb">Tecnologia OrthoX IA RAG &middot; {{OS}}</span></div>
 </body></html>`;
 
 // Definição dos blocos de validação
@@ -1406,14 +1408,23 @@ function atualizarPreview(id) {
 
   const queixaBlock = l.queixa ? `<div class="pf pff"><span class="lbl">Queixa</span><span class="val">${escHtml(l.queixa)}</span></div>` : '';
 
+  const radiografiaBlock = l.imagem_url
+    ? `<div class="rx-wrap"><img class="rx-img" src="${escHtml(l.imagem_url)}" alt="Radiografia Original"><div class="rx-caption">Radiografia Panor&acirc;mica &mdash; Imagem Original do Exame</div></div>`
+    : '';
+  const tipoExameMap = { panoramica: 'Radiografia Panorâmica', periapical: 'Radiografia Periapical', interproximal: 'Radiografia Interproximal' };
+  const tipoExame = tipoExameMap[l.tipo_exame] || (l.tipo_exame || 'Radiografia Panorâmica');
+
   let html = PDF_TEMPLATE
     .replace(/{{OS}}/g, escHtml(l.os || '—'))
+    .replace('{{LOGO_URL}}',   '/assets/orthox-logo-oficial.webp?v=20260527')
     .replace('{{PACIENTE}}',   escHtml(l.nome_paciente || '—'))
     .replace('{{DATA_EXAME}}', escHtml(l.data_exame || '—'))
     .replace('{{DENTISTA}}',   escHtml(l.dentista || '—'))
     .replace('{{DATA_NASC}}',  escHtml(l.data_nasc || '—'))
     .replace('{{SEXO}}',       escHtml(l.sexo || '—'))
-    .replace('{{QUEIXA_BLOCK}}',  queixaBlock)
+    .replace('{{TIPO_EXAME}}', escHtml(tipoExame))
+    .replace('{{QUEIXA_BLOCK}}',     queixaBlock)
+    .replace('{{RADIOGRAFIA_BLOCK}}', radiografiaBlock)
     .replace('{{ACHADOS_BLOCKS}}', achadosHtml)
     .replace('{{IMP_ITEMS}}',  impArr.map(i => `<li>${escHtml(i)}</li>`).join(''))
     .replace('{{REC_ITEMS}}',  recArr.map(i => `<li>${escHtml(i)}</li>`).join(''));
