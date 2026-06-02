@@ -732,18 +732,45 @@ async function enviar() {
   if (!dataNasc)     { showError('Preencha a data de nascimento.'); return; }
   if (!sexo)         { showError('Selecione o sexo do paciente.'); return; }
 
-  const btn = document.getElementById('btnSubmit');
-  btn.disabled = true; btn.textContent = 'Convertendo imagem...';
+  // Bloquear TODOS os campos durante o envio
+  var formInputs = document.querySelectorAll('#panel-envio input, #panel-envio textarea, #panel-envio select, #panel-envio button');
+  formInputs.forEach(function(el) { el.disabled = true; });
+  var uploadZone = document.getElementById('uploadZone');
+  if (uploadZone) uploadZone.style.pointerEvents = 'none';
+  
+  var btn = document.getElementById('btnSubmit');
+  btn.textContent = 'Comprimindo imagem...';
+  btn.style.background = '#1a3a2a';
   hideError();
 
-  // Converter imagem para base64 e enviar como JSON
   try {
-    const reader = new FileReader();
-    reader.onload = async function(e) {
-      btn.textContent = 'Enviando...';
-      const imageBase64 = e.target.result.split(',')[1]; // remove data:image/...;base64,
+    // === PASSO 1: Comprimir imagem via canvas ===
+    var img = new Image();
+    var objectUrl = URL.createObjectURL(selectedFile);
+    
+    img.onload = async function() {
+      URL.revokeObjectURL(objectUrl);
       
-      const payload = {
+      // Canvas para compressão — máximo 1200px de largura, JPEG 80% qualidade
+      var canvas = document.createElement('canvas');
+      var MAX_W = 1200;
+      var scale = img.width > MAX_W ? MAX_W / img.width : 1;
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      
+      // Comprimir para JPEG (formato universal para radiografias)
+      var compressedDataUrl = canvas.toDataURL('image/jpeg', 0.80);
+      var imageBase64 = compressedDataUrl.split(',')[1];
+      
+      // Mostrar info de compressão
+      var originalKB = (selectedFile.size / 1024).toFixed(0);
+      var compressedKB = (imageBase64.length * 0.75 / 1024).toFixed(0);
+      btn.textContent = 'Enviando (' + compressedKB + ' KB)...';
+      
+      // === PASSO 2: Enviar como JSON ===
+      var payload = {
         nomePaciente: nomePaciente,
         dataNasc: dataNasc,
         sexo: sexo,
@@ -757,7 +784,7 @@ async function enviar() {
       };
       
       try {
-        const res = await fetch(CFG.webhookEnvio, {
+        var res = await fetch(CFG.webhookEnvio, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -766,24 +793,39 @@ async function enviar() {
           body: JSON.stringify(payload)
         });
         if (!res.ok) {
-          const errText = await res.text();
+          var errText = await res.text();
           throw new Error('HTTP ' + res.status + (errText ? ': ' + errText.substring(0, 200) : ''));
         }
         mostrarToast(); resetForm();
       } catch (err) {
         showError('Falha no envio: ' + (err.message || 'verifique a conexão com o servidor'));
       } finally {
-        btn.disabled = false; btn.textContent = 'Enviar para Análise IA →';
+        // Desbloquear campos
+        formInputs.forEach(function(el) { el.disabled = false; });
+        if (uploadZone) uploadZone.style.pointerEvents = '';
+        btn.style.background = '';
+        btn.textContent = 'Enviar para Análise IA →';
       }
     };
-    reader.onerror = function() {
-      showError('Erro ao ler o arquivo de imagem.');
-      btn.disabled = false; btn.textContent = 'Enviar para Análise IA →';
+    
+    img.onerror = function() {
+      URL.revokeObjectURL(objectUrl);
+      showError('Erro ao processar a imagem. Verifique o formato do arquivo.');
+      formInputs.forEach(function(el) { el.disabled = false; });
+      if (uploadZone) uploadZone.style.pointerEvents = '';
+      btn.style.background = '';
+      btn.textContent = 'Enviar para Análise IA →';
     };
-    reader.readAsDataURL(selectedFile);
+    
+    // Iniciar carregamento da imagem
+    img.src = objectUrl;
+    
   } catch (err) {
     showError('Erro ao processar imagem: ' + (err.message || 'desconhecido'));
-    btn.disabled = false; btn.textContent = 'Enviar para Análise IA →';
+    formInputs.forEach(function(el) { el.disabled = false; });
+    if (uploadZone) uploadZone.style.pointerEvents = '';
+    btn.style.background = '';
+    btn.textContent = 'Enviar para Análise IA →';
   }
 }
 
