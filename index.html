@@ -2257,7 +2257,7 @@ function renderDashboard() {
   `;
   
   // Render charts (after DOM update)
-  setTimeout(renderCharts, 100);
+  if (window.Chart) setTimeout(renderCharts, 100);
 }
 
 // ── Charts ─────────────────────────────────────────────────────
@@ -2376,10 +2376,17 @@ function startDashboardRefresh() {
 // ── Init ───────────────────────────────────────────────────────
 // Called when Dashboard tab is activated
 function initDashboard() {
-  loadChartJS(() => {
-    loadDashboard();
-    startDashboardRefresh();
-  });
+  // Renderiza imediatamente (sem esperar Chart.js CDN)
+  loadDashboard();
+  startDashboardRefresh();
+  // Carrega Chart.js em background para gráficos
+  if (!window.Chart) {
+    var s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
+    s.onload = function() { if (DASH.data) renderCharts(); };
+    s.onerror = function() { console.warn('Chart.js CDN indisponível — dashboard texto-only'); };
+    document.head.appendChild(s);
+  }
 }
 
 </script>
