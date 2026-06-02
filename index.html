@@ -615,6 +615,7 @@ select option{background:#fff;color:var(--text)}
 const CFG = {
   webhookEnvio:   "https://n8n.servidoremn.site/webhook/OrthoX",
   webhookReprint: "https://n8n.servidoremn.site/webhook/OrthoX-Reprint",
+  webhookAprovacao: "https://n8n.servidoremn.site/webhook/OrthoX-Aprovacao",
   orthoXToken:    "OrthoX-Prod-2026!", // Senha configurada no Header Auth do n8n
   
   // A chave abaixo é a 'anon key' (pública). Usada APENAS para ler (GET) a lista de laudos.
@@ -1283,8 +1284,7 @@ function abrirEditor(id) {
         <textarea id="bloco-ta-${id}-${def.key}" rows="${def.key === 'impressao' || def.key === 'rec' ? 5 : 3}"
           oninput="onBlocoInput('${id}','${def.key}')">${escHtml(val)}</textarea>
         <div class="bloco-actions">
-          <button class="btn-bloco-confirmar" onclick="confirmarBloco('${id}','${def.key}')">✓ Confirmar</button>
-          <button class="btn-bloco-editar" onclick="editarBloco('${id}','${def.key}')">✏ Marcar como editado</button>
+          <button class="btn-bloco-confirmar" id="btn-confirm-${id}-${def.key}" onclick="confirmarBloco('${id}','${def.key}')">${estado === 'editado' ? '✓ Confirmar alteração' : '✓ Confirmar'}</button>
         </div>
       </div>`;
 
@@ -1317,9 +1317,10 @@ function onBlocoInput(id, key) {
   if (!window.blocosVals[id]) window.blocosVals[id] = {};
   const def = BLOCOS_DEF.find(d => d.key === key);
   window.blocosVals[id][def.campo] = ta.value;
-  // Marca como editado ao digitar (mas não fecha o bloco)
+  // Marca como editado ao digitar — botão muda para "confirmar alteração"
   setEstadoBloco(id, key, 'editado');
   atualizarPreview(id);
+  atualizarProgressBar(id);
 }
 
 // ── Confirmar bloco ───────────────────────────────────────────
@@ -1348,6 +1349,9 @@ function setEstadoBloco(id, key, estado) {
   const badgeMap = { pendente:'Pendente', confirmado:'✓ OK', editado:'✏ Editado' };
   const badgeEl = bloco.querySelector('.bloco-badge');
   if (badgeEl) badgeEl.textContent = badgeMap[estado];
+  // Atualiza texto do botão confirmar baseado no estado
+  const btnConfirm = document.getElementById('btn-confirm-' + id + '-' + key);
+  if (btnConfirm) btnConfirm.textContent = estado === 'editado' ? '✓ Confirmar alteração' : '✓ Confirmar';
 }
 
 // ── Barra de progresso ────────────────────────────────────────
@@ -1363,7 +1367,7 @@ function atualizarProgressBar(id) {
 
   stepsEl.innerHTML = BLOCOS_DEF.map(def => {
     const e = estado[def.key] || 'pendente';
-    if (e !== 'pendente') feitos++;
+    if (e === 'confirmado') feitos++;
     return `<div class="val-progress-step ${e === 'confirmado' ? 'done' : e === 'editado' ? 'edited' : ''}"></div>`;
   }).join('');
 
@@ -1439,6 +1443,94 @@ function escHtml(s) {
   return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
+// ── Montar payload de aprovação para envio ao n8n ─────────────
+function montarPayloadAprovacao(id, l, updatePayload) {
+  const state = window.blocosState[id] || {};
+  const vals  = window.blocosVals[id]  || {};
+  
+  // Campos originais da IA (antes da edição)
+  let origAchados = l.achados_radiograficos || {};
+  if (typeof origAchados === 'string') { try { origAchados = JSON.parse(origAchados); } catch(e) { origAchados = {}; } }
+  let origImpressao = l.impressao_radiografica || [];
+  if (typeof origImpressao === 'string') { try { origImpressao = JSON.parse(origImpressao); } catch(e) { origImpressao = [origImpressao]; } }
+  let origRec = l.recomendacoes_orthox || [];
+  if (typeof origRec === 'string') { try { origRec = JSON.parse(origRec); } catch(e) { origRec = [origRec]; } }
+
+  // Mapear campos de achados_radiograficos
+  const camposAchados = ['denticao_ausencias','reabilitacoes_implantes','tratamentos_endodonticos_restauracoes','avaliacao_ossea_periodontal','seios_maxilares_estruturas_adjacentes'];
+  const detalhes = [];
+  const camposEditados = [];
+  const camposConfirmados = [];
+
+  for (const campo of camposAchados) {
+    const estado = state[campo] || 'pendente';
+    const original = (origAchados[campo] || '').replace(/\[ATENÇÃO DRA.*?\]/g, '').trim();
+    const aprovado = (vals[campo] || updatePayload.achados_radiograficos[campo] || '').replace(/\[ATENÇÃO DRA.*?\]/g, '').trim();
+    
+    if (estado === 'editado') {
+      camposEditados.push(campo);
+      detalhes.push({ campo, estado: 'editado', valor_original_ia: original, valor_aprovado_medico: aprovado });
+    } else if (estado === 'confirmado') {
+      camposConfirmados.push(campo);
+      detalhes.push({ campo, estado: 'confirmado', valor_original_ia: original, valor_aprovado_medico: aprovado });
+    } else {
+      // pendente — o médico não interagiu com este campo (equivale a confirmado implicitamente)
+      detalhes.push({ campo, estado: 'nao_alterado', valor_original_ia: original, valor_aprovado_medico: aprovado });
+    }
+  }
+
+  // Impressão radiográfica
+  const impState = state['_impressao'] || 'pendente';
+  const impOrig = Array.isArray(origImpressao) ? origImpressao.join('\n') : origImpressao;
+  const impAprov = Array.isArray(updatePayload.impressao_radiografica) ? updatePayload.impressao_radiografica.join('\n') : updatePayload.impressao_radiografica;
+  detalhes.push({ campo: 'impressao_radiografica', estado: impState === 'editado' ? 'editado' : impState === 'confirmado' ? 'confirmado' : 'nao_alterado', valor_original_ia: impOrig, valor_aprovado_medico: impAprov });
+  if (impState === 'editado') camposEditados.push('impressao_radiografica');
+  else if (impState === 'confirmado') camposConfirmados.push('impressao_radiografica');
+
+  // Recomendações
+  const recState = state['_recomendacoes'] || 'pendente';
+  const recOrig = Array.isArray(origRec) ? origRec.join('\n') : origRec;
+  const recAprov = Array.isArray(updatePayload.recomendacoes_orthox) ? updatePayload.recomendacoes_orthox.join('\n') : updatePayload.recomendacoes_orthox;
+  detalhes.push({ campo: 'recomendacoes_orthox', estado: recState === 'editado' ? 'editado' : recState === 'confirmado' ? 'confirmado' : 'nao_alterado', valor_original_ia: recOrig, valor_aprovado_medico: recAprov });
+  if (recState === 'editado') camposEditados.push('recomendacoes_orthox');
+  else if (recState === 'confirmado') camposConfirmados.push('recomendacoes_orthox');
+
+  return {
+    laudo_id: id,
+    os: l.os,
+    nome_paciente: l.nome_paciente,
+    dentista: l.dentista || '',
+    data_exame: l.data_exame || '',
+    tipo_exame: l.tipo_exame || 'panoramica',
+    status: 'Aprovado',
+    validado_em: new Date().toISOString(),
+    pdf_url: l.pdf_url || '',
+    drive_folder_url: l.drive_folder_url || '',
+    imagem_url: l.imagem_url || '',
+    ajustes: {
+      total_campos: camposAchados.length + 2,
+      campos_editados: camposEditados,
+      campos_confirmados: camposConfirmados,
+      campos_nao_alterados: camposAchados.length + 2 - camposEditados.length - camposConfirmados.length,
+      detalhes: detalhes
+    },
+    achados_radiograficos: updatePayload.achados_radiograficos,
+    impressao_radiografica: updatePayload.impressao_radiografica,
+    recomendacoes_orthox: updatePayload.recomendacoes_orthox
+  };
+}
+
+// ── Enviar dados de aprovação para o n8n (fire-and-forget) ─────
+function dispararWebhookAprovacao(payload) {
+  fetch(CFG.webhookAprovacao, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).catch(function() {
+    // Silencioso — não bloqueia a UI se o webhook falhar
+  });
+}
+
 // ── Finalizar laudo (novo botão unificado) ────────────────────
 async function finalizarLaudo(id) {
   const btnEl = document.getElementById('btn-final-' + id);
@@ -1510,6 +1602,10 @@ async function finalizarLaudo(id) {
 
     buscarValidacoes();
     buscarLaudos();
+
+    // Disparar webhook de aprovação para coleta de feedback qualitativo
+    const payloadAprov = montarPayloadAprovacao(id, l, updatePayload);
+    dispararWebhookAprovacao(payloadAprov);
   } catch (err) {
     alert('Erro ao processar: ' + err.message);
     btnEl.disabled = false;
@@ -1713,6 +1809,10 @@ async function aprovarSemEditar(id) {
 
         buscarValidacoes();
         buscarLaudos();
+
+        // Disparar webhook de aprovação (fire-and-forget)
+        var payloadAprov2 = montarPayloadAprovacao(id, l, updatePayload);
+        dispararWebhookAprovacao(payloadAprov2);
     } catch (err) {
         alert('Erro ao processar: ' + err.message);
         btnEl.disabled = false;
