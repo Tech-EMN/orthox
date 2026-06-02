@@ -733,34 +733,56 @@ async function enviar() {
   if (!sexo)         { showError('Selecione o sexo do paciente.'); return; }
 
   const btn = document.getElementById('btnSubmit');
-  btn.disabled = true; btn.textContent = 'Enviando...';
+  btn.disabled = true; btn.textContent = 'Convertendo imagem...';
   hideError();
 
-  const fd = new FormData();
-  fd.append('imagem',       selectedFile, selectedFile.name);
-  fd.append('nomePaciente', nomePaciente);
-  fd.append('dataNasc',     dataNasc);
-  fd.append('sexo',         sexo);
-  fd.append('osNum',        document.getElementById('osNum').value);
-  fd.append('dentista',     document.getElementById('dentista').value);
-  fd.append('dataExame',    document.getElementById('dataExame').value);
-  fd.append('tipoExame',    document.getElementById('tipoExame').value);
-  fd.append('queixa',       document.getElementById('queixa').value);
-  fd.append('timestamp',    new Date().toISOString());
-
+  // Converter imagem para base64 e enviar como JSON
   try {
-    const res = await fetch(CFG.webhookEnvio, { 
-        method: 'POST', 
-        headers: {
-            'x-orthox-token': CFG.orthoXToken // Envia a senha para o n8n
-        },
-        body: fd 
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    mostrarToast(); resetForm();
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+      btn.textContent = 'Enviando...';
+      const imageBase64 = e.target.result.split(',')[1]; // remove data:image/...;base64,
+      
+      const payload = {
+        nomePaciente: nomePaciente,
+        dataNasc: dataNasc,
+        sexo: sexo,
+        osNum: document.getElementById('osNum').value || '',
+        dentista: document.getElementById('dentista').value || '',
+        dataExame: document.getElementById('dataExame').value || '',
+        tipoExame: document.getElementById('tipoExame').value || 'panoramica',
+        queixa: document.getElementById('queixa').value || '',
+        image_base64: imageBase64,
+        timestamp: new Date().toISOString()
+      };
+      
+      try {
+        const res = await fetch(CFG.webhookEnvio, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-orthox-token': CFG.orthoXToken
+          },
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error('HTTP ' + res.status + (errText ? ': ' + errText.substring(0, 200) : ''));
+        }
+        mostrarToast(); resetForm();
+      } catch (err) {
+        showError('Falha no envio: ' + (err.message || 'verifique a conexão com o servidor'));
+      } finally {
+        btn.disabled = false; btn.textContent = 'Enviar para Análise IA →';
+      }
+    };
+    reader.onerror = function() {
+      showError('Erro ao ler o arquivo de imagem.');
+      btn.disabled = false; btn.textContent = 'Enviar para Análise IA →';
+    };
+    reader.readAsDataURL(selectedFile);
   } catch (err) {
-    showError('Falha no envio: ' + (err.message || 'verifique a conexão com o servidor'));
-  } finally {
+    showError('Erro ao processar imagem: ' + (err.message || 'desconhecido'));
     btn.disabled = false; btn.textContent = 'Enviar para Análise IA →';
   }
 }
