@@ -650,22 +650,25 @@ const odontogramaState = {}; // Guarda o estado dos dentes para cada laudo
 window.laudosDict = {};
 
 /* ── TABS ── */
-function switchTab(tab) {
-  // Hide all panels
-  document.querySelectorAll('.panel').forEach(p => p.style.display = 'none');
-  // Deactivate all tab buttons
+function switchTab(nome, btn) {
+  // Deactivate all panels and buttons
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  // Show selected
-  const panel = document.getElementById('panel-' + tab);
-  if (panel) panel.style.display = 'block';
-  const btn = document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1));
+  // Activate selected panel and button
   if (btn) btn.classList.add('active');
-  // Init dashboard on demand
-  if (tab === 'dashboard') { initDashboard(); }
-}
+  const panel = document.getElementById('panel-' + nome);
+  if (panel) panel.classList.add('active');
+  // Tab-specific initialization
+  if (nome === 'laudos') {
+    novosPend = 0; atualizarNotif();
+    if (!pollTimer) iniciarPolling();
+  }
   if (nome === 'validacao') {
     valPend = 0; atualizarValNotif();
     buscarValidacoes();
+  }
+  if (nome === 'dashboard') {
+    initDashboard();
   }
 }
 
