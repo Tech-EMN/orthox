@@ -2355,13 +2355,35 @@ async function loadDashboard() {
   if (DASH.loading) return;
   DASH.loading = true;
   
-  const panel = document.getElementById('panel-dashboard');
-  if (panel) panel.innerHTML = '<div class="dash-loading">📊 Carregando métricas...</div>';
+  var panel = document.getElementById('panel-dashboard');
+  if (!panel) { console.error('Dashboard: panel-dashboard not found'); return; }
+  panel.innerHTML = '<div class="dash-loading">📊 Carregando métricas do Supabase...</div>';
   
-  DASH.data = await fetchDashboardData();
+  try {
+    DASH.data = await fetchDashboardData();
+  } catch(e) {
+    console.error('Dashboard load error:', e);
+    panel.innerHTML = '<div class="dash-error">⚠️ Erro ao carregar: ' + (e.message || 'desconhecido') + '<br><small>Verifique o console (F12) para detalhes</small></div>';
+    DASH.loading = false;
+    return;
+  }
+  
   DASH.loading = false;
   
-  loadChartJS(() => renderDashboard());
+  if (!DASH.data || DASH.data.total_laudos === 0) {
+    panel.innerHTML = '<div class="dash-loading">📊 Nenhum laudo encontrado nos últimos ' + DASH.periodDays + ' dias.<br><small>Tente ampliar o período ou aguardar novas execuções.</small></div>';
+  } else {
+    renderDashboard();
+  }
+  
+  // Carrega Chart.js em background para gráficos
+  if (!window.Chart) {
+    var s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
+    s.onload = function() { if (DASH.data) renderCharts(); };
+    s.onerror = function() { console.warn('Chart.js CDN indisponível'); };
+    document.head.appendChild(s);
+  }
 }
 
 function startDashboardRefresh() {
@@ -2376,17 +2398,8 @@ function startDashboardRefresh() {
 // ── Init ───────────────────────────────────────────────────────
 // Called when Dashboard tab is activated
 function initDashboard() {
-  // Renderiza imediatamente (sem esperar Chart.js CDN)
   loadDashboard();
   startDashboardRefresh();
-  // Carrega Chart.js em background para gráficos
-  if (!window.Chart) {
-    var s = document.createElement('script');
-    s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
-    s.onload = function() { if (DASH.data) renderCharts(); };
-    s.onerror = function() { console.warn('Chart.js CDN indisponível — dashboard texto-only'); };
-    document.head.appendChild(s);
-  }
 }
 
 </script>
