@@ -724,6 +724,8 @@ function processFile(file) {
 /* ── ENVIO (WEBHOOK 1) ── */
 async function enviar() {
   if (!selectedFile) return;
+  if (window.ENVIANDO) return;
+  window.ENVIANDO = true;
 
   const nomePaciente = document.getElementById('nomePaciente').value.trim();
   const dataNasc     = document.getElementById('dataNasc').value;
@@ -774,7 +776,7 @@ async function enviar() {
         nomePaciente: nomePaciente,
         dataNasc: dataNasc,
         sexo: sexo,
-        osNum: document.getElementById('osNum').value || '',
+        osNum: document.getElementById('osNum').value || 'OS-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
         dentista: document.getElementById('dentista').value || '',
         dataExame: document.getElementById('dataExame').value || '',
         tipoExame: document.getElementById('tipoExame').value || 'panoramica',
@@ -899,7 +901,9 @@ function renderLaudos(lista) {
   const primeiraVez = vistos.size === 0;
   lista.forEach(l => { if (!vistos.has(l.id)) { if (!primeiraVez) novosPend++; vistos.add(l.id); } });
   atualizarNotif();
-  el.innerHTML = lista.map((l, idx) => {
+  // Deduplicar por OS — mostrar apenas o registro mais recente de cada OS
+  const unicos = Array.from(new Map(lista.map(l => [l.os, l])).values());
+  el.innerHTML = unicos.map((l, idx) => {
     const isNovo = !primeiraVez && idx === 0 && novosPend > 0;
     const dt = l.created_at ? new Date(l.created_at).toLocaleString('pt-BR') : '—';
     let btnHtml;
