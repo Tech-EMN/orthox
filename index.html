@@ -723,8 +723,8 @@ function processFile(file) {
 
 /* ── ENVIO (WEBHOOK 1) ── */
 async function enviar() {
-  if (!selectedFile) return;
-  if (window.ENVIANDO) return;
+  if (!selectedFile) { showError('Selecione uma imagem antes de enviar.'); return; }
+  if (window.ENVIANDO) { showError('Um envio ja esta em andamento. Aguarde.'); return; }
   window.ENVIANDO = true;
 
   const nomePaciente = document.getElementById('nomePaciente').value.trim();
@@ -799,6 +799,12 @@ async function enviar() {
           throw new Error('HTTP ' + res.status + (errText ? ': ' + errText.substring(0, 200) : ''));
         }
         mostrarToast(); resetForm();
+        
+        // Feedback visual: mostrar 'Enviado!' por 2s
+        btn.textContent = '✅ Enviado!';
+        btn.style.background = '#16A34A';
+        await new Promise(function(r) { setTimeout(r, 2000); });
+        
       } catch (err) {
         showError('Falha no envio: ' + (err.message || 'verifique a conexão com o servidor'));
       } finally {
@@ -807,6 +813,7 @@ async function enviar() {
         if (uploadZone) uploadZone.style.pointerEvents = '';
         btn.style.background = '';
         btn.textContent = 'Enviar para Análise IA →';
+        window.ENVIANDO = false;
       }
     };
     
@@ -817,6 +824,7 @@ async function enviar() {
       if (uploadZone) uploadZone.style.pointerEvents = '';
       btn.style.background = '';
       btn.textContent = 'Enviar para Análise IA →';
+      window.ENVIANDO = false;
     };
     
     // Iniciar carregamento da imagem
@@ -828,6 +836,7 @@ async function enviar() {
     if (uploadZone) uploadZone.style.pointerEvents = '';
     btn.style.background = '';
     btn.textContent = 'Enviar para Análise IA →';
+    window.ENVIANDO = false;
   }
 }
 
