@@ -26,15 +26,15 @@ function switchTab(nome, btn) {
   if (panel) panel.classList.add('active');
   // Tab-specific initialization
   if (nome === 'laudos') {
-    window.novosPend = 0; atualizarNotif();
-    if (!window.pollTimer) iniciarPolling();
+    window.novosPend = 0; window.atualizarNotif();
+    if (!window.pollTimer) window.iniciarPolling();
   }
   if (nome === 'validacao') {
-    window.valPend = 0; atualizarValNotif();
-    buscarValidacoes();
+    window.valPend = 0; window.atualizarValNotif();
+    window.buscarValidacoes();
   }
   if (nome === 'dashboard') {
-    initDashboard();
+    window.initDashboard();
   }
 }
 
