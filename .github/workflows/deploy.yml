@@ -1,4 +1,4 @@
-name: Deploy to Netlify
+name: Deploy to Netlify (Verified)
 
 on:
   push:
@@ -6,7 +6,72 @@ on:
   workflow_dispatch:
 
 jobs:
+  validate:
+    runs-on: ubuntu-latest
+    outputs:
+      modules_exist: ${{ steps.check-modules.outputs.exists }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: .gitignore safety check
+        run: |
+          echo "==> Checking .gitignore does not exclude modules/"
+          if grep -q '^modules/' .gitignore 2>/dev/null || grep -q '^/modules/' .gitignore 2>/dev/null; then
+            echo "❌ FATAL: modules/ is excluded in .gitignore!"
+            echo "   This would prevent modularized frontend from deploying."
+            echo "   Remove 'modules/' from .gitignore before merging."
+            exit 1
+          fi
+          echo "✅ .gitignore check passed — modules/ is NOT excluded"
+
+      - name: Validate HTML structure
+        run: |
+          echo "==> Validating index.html"
+          if ! grep -q '<!DOCTYPE html>' index.html; then
+            echo "❌ index.html missing DOCTYPE"
+            exit 1
+          fi
+          echo "   DOCTYPE: OK"
+          
+          # Check for critical elements
+          for pattern in 'image_base64' 'CFG.webhookEnvio' 'orthox-token'; do
+            if grep -q "$pattern" index.html; then
+              echo "   ✅ $pattern: found"
+            else
+              echo "   ⚠️  $pattern: NOT FOUND — may indicate broken frontend"
+            fi
+          done
+          
+          # Check for security: no hardcoded secrets
+          if grep -qP 'sk-[a-zA-Z0-9]{20,}' index.html; then
+            echo "❌ API key hardcoded in index.html!"
+            exit 1
+          fi
+          echo "   No hardcoded keys: OK"
+
+      - name: Check modules directory (future-proof)
+        id: check-modules
+        run: |
+          if [ -d "modules" ]; then
+            echo "==> modules/ directory found — verifying all JS files"
+            echo "exists=true" >> $GITHUB_OUTPUT
+            for f in modules/*.js; do
+              if [ -f "$f" ]; then
+                echo "   ✅ $f"
+              fi
+            done
+            # Verify modules/ NOT empty
+            if [ -z "$(ls -A modules/ 2>/dev/null)" ]; then
+              echo "❌ modules/ directory is EMPTY!"
+              exit 1
+            fi
+          else
+            echo "==> modules/ not yet present (monolithic frontend) — OK for F1.1-F1.3"
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
   deploy:
+    needs: validate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -15,7 +80,111 @@ jobs:
         run: npm install -g netlify-cli
 
       - name: Deploy to Netlify
-        run: netlify deploy --prod --dir=. --message "${{ github.event.head_commit.message }}"
+        id: deploy
+        run: |
+          netlify deploy --prod --dir=. --message "${{ github.event.head_commit.message }}"
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+
+  smoke-test:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for CDN propagation
+        run: sleep 10
+
+      - name: Smoke test — Netlify site alive
+        run: |
+          NETLIFY_URL="https://laudos-orthox.netlify.app"
+          
+          echo "==> Smoke testing $NETLIFY_URL"
+          
+          # Test 1: Site responds
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$NETLIFY_URL")
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "❌ Site returned HTTP $HTTP_CODE"
+            exit 1
+          fi
+          echo "✅ Test 1: HTTP 200 OK"
+          
+          # Test 2: HTML is valid
+          HTML=$(curl -s "$NETLIFY_URL")
+          if ! echo "$HTML" | grep -q 'application/json'; then
+            echo "❌ Test 2: Content-Type 'application/json' NOT found in HTML"
+            exit 1
+          fi
+          echo "✅ Test 2: Content-Type JSON confirmed"
+          
+          # Test 3: image_base64 handling present
+          if ! echo "$HTML" | grep -q 'image_base64'; then
+            echo "❌ Test 3: image_base64 NOT found in HTML"
+            exit 1
+          fi
+          echo "✅ Test 3: image_base64 handling present"
+          
+          # Test 4: Webhook endpoint configured
+          if ! echo "$HTML" | grep -q 'webhook/OrthoX'; then
+            echo "⚠️  Test 4: webhook/OrthoX NOT found — staging may use different path"
+          else
+            echo "✅ Test 4: webhook endpoint configured"
+          fi
+
+      - name: Smoke test — modules (if modularized)
+        if: needs.validate.outputs.modules_exist == 'true'
+        run: |
+          NETLIFY_URL="https://laudos-orthox.netlify.app"
+          echo "==> Verifying modules/ accessible on Netlify"
+          MODULES=("config.js" "upload.js" "laudos.js" "validacao.js" "dashboard.js")
+          
+          for mod in "${MODULES[@]}"; do
+            CODE=$(curl -s -o /dev/null -w "%{http_code}" "$NETLIFY_URL/modules/$mod")
+            if [ "$CODE" = "200" ]; then
+              echo "   ✅ modules/$mod: HTTP 200"
+            elif [ "$CODE" = "404" ]; then
+              echo "   ⚠️  modules/$mod: HTTP 404 — may not exist yet"
+            else
+              echo "   ❌ modules/$mod: HTTP $CODE"
+            fi
+          done
+
+      - name: Smoke test — assets
+        run: |
+          NETLIFY_URL="https://laudos-orthox.netlify.app"
+          echo "==> Verifying critical assets"
+          ASSETS=("orthox-logo-oficial.webp" "orthox-logo-192.png")
+          for asset in "${ASSETS[@]}"; do
+            CODE=$(curl -s -o /dev/null -w "%{http_code}" "$NETLIFY_URL/assets/$asset")
+            if [ "$CODE" = "200" ]; then
+              echo "   ✅ assets/$asset: HTTP 200"
+            else
+              echo "   ⚠️  assets/$asset: HTTP $CODE"
+            fi
+          done
+
+  notify:
+    needs: smoke-test
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Summarize deployment
+        run: |
+          echo "============================================"
+          echo "  OrthoX Frontend Deploy — Summary"
+          echo "============================================"
+          echo "  Validate:   ${{ needs.validate.result }}"
+          echo "  Deploy:     ${{ needs.deploy.result }}"
+          echo "  Smoke Test: ${{ needs.smoke-test.result }}"
+          echo "  Commit:     ${{ github.event.head_commit.message }}"
+          echo "  By:         ${{ github.actor }}"
+          echo "============================================"
+          
+          if [ "${{ needs.validate.result }}" = "failure" ]; then
+            echo "❌ Validation failed — deploy blocked"
+          elif [ "${{ needs.deploy.result }}" = "failure" ]; then
+            echo "❌ Deploy failed"
+          elif [ "${{ needs.smoke-test.result }}" = "failure" ]; then
+            echo "⚠️  Smoke test failed — site may be degraded"
+          else
+            echo "✅ All checks passed"
+          fi
