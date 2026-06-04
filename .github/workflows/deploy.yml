@@ -70,25 +70,20 @@ jobs:
             echo "exists=false" >> $GITHUB_OUTPUT
           fi
 
-  deploy:
+  wait-deploy:
     needs: validate
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: Install Netlify CLI
-        run: npm install -g netlify-cli
-
-      - name: Deploy to Netlify
-        id: deploy
+      - name: Wait for Netlify auto-deploy
         run: |
-          netlify deploy --prod --dir=. --message "${{ github.event.head_commit.message }}"
-        env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          echo "Netlify auto-deploys on push to main (GitHub integration)."
+          echo "Waiting 45s for build + CDN propagation..."
+          sleep 45
+        # Netlify detects push → builds → deploys automatically via GitHub App webhook
+        # No token required — the connection is configured in Netlify dashboard
 
   smoke-test:
-    needs: deploy
+    needs: wait-deploy
     runs-on: ubuntu-latest
     steps:
       - name: Wait for CDN propagation
