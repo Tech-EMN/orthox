@@ -35,8 +35,8 @@ jobs:
           
           # Check for critical elements
           for pattern in 'image_base64' 'CFG.webhookEnvio' 'orthox-token'; do
-            if grep -q "$pattern" index.html; then
-              echo "   ✅ $pattern: found (in index.html or js/config.js)"
+            if grep -q "$pattern" index.html || grep -q "$pattern" js/config.js; then
+              echo "   ✅ $pattern: found"
             else
               echo "   ⚠️  $pattern: NOT FOUND — may indicate broken frontend"
             fi
