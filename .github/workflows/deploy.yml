@@ -91,7 +91,7 @@ jobs:
 
       - name: Smoke test — Netlify site alive
         run: |
-          NETLIFY_URL="https://laudos-orthox.netlify.app"
+          NETLIFY_URL="https://orthox-laudos.netlify.app"
           
           echo "==> Smoke testing $NETLIFY_URL"
           
@@ -128,7 +128,7 @@ jobs:
       - name: Smoke test — modules (if modularized)
         if: needs.validate.outputs.modules_exist == 'true'
         run: |
-          NETLIFY_URL="https://laudos-orthox.netlify.app"
+          NETLIFY_URL="https://orthox-laudos.netlify.app"
           echo "==> Verifying modules/ accessible on Netlify"
           MODULES=("config.js" "upload.js" "laudos.js" "validacao.js" "dashboard.js")
           
@@ -145,7 +145,7 @@ jobs:
 
       - name: Smoke test — assets
         run: |
-          NETLIFY_URL="https://laudos-orthox.netlify.app"
+          NETLIFY_URL="https://orthox-laudos.netlify.app"
           echo "==> Verifying critical assets"
           ASSETS=("orthox-logo-oficial.webp" "orthox-logo-192.png")
           for asset in "${ASSETS[@]}"; do
