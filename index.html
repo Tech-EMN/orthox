@@ -199,37 +199,7 @@
   <span class="footer-right">by <span>ATRIA</span> Corp</span>
 </footer>
 
-<script type="module">
-  import CFG from './js/config.js';
-  import { switchTab, atualizarReadout, handleFile, processFile, enviar, mostrarToast, resetForm, showError, hideError } from './js/upload.js';
-  import { buscarLaudos, renderLaudos, iniciarPolling, atualizarNotif, atualizarValNotif } from './js/laudos.js';
-  import { buscarValidacoes, renderValidacoes, abrirEditor, toggleBloco, onBlocoInput, confirmarBloco, editarBloco, setEstadoBloco, atualizarProgressBar, atualizarPreview, escHtml, esc, montarPayloadAprovacao, dispararWebhookAprovacao, finalizarLaudo, inicializarOdontograma, toggleDente, atualizarTextoDenticao, aprovarSemEditar, dispararWebhookReprint, loadChartJS } from './js/validacao.js';
-  import { initDashboard } from './js/dashboard.js';
-
-  // Expose functions to global scope (needed by onclick handlers in HTML)
-  window.switchTab = switchTab;
-  window.atualizarReadout = atualizarReadout;
-  window.handleFile = handleFile;
-  window.enviar = enviar;
-  window.buscarLaudos = buscarLaudos;
-  window.buscarValidacoes = buscarValidacoes;
-  window.abrirEditor = abrirEditor;
-  window.toggleBloco = toggleBloco;
-  window.onBlocoInput = onBlocoInput;
-  window.confirmarBloco = confirmarBloco;
-  window.editarBloco = editarBloco;
-  window.toggleDente = toggleDente;
-  window.aprovarSemEditar = aprovarSemEditar;
-  window.finalizarLaudo = finalizarLaudo;
-  window.atualizarNotif = atualizarNotif;
-  window.atualizarValNotif = atualizarValNotif;
-  window.iniciarPolling = iniciarPolling;
-  window.initDashboard = initDashboard;
-
-  // Initialize
-  iniciarPolling();
-  initDashboard();
-</script>
+<script type="module" src="./js/main.js"></script>
 
 </body>
 </html>
