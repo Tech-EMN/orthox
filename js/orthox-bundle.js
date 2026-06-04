@@ -949,6 +949,20 @@ function renderArtefatosBlock(l) {
       </details>
   `;
 }
+
+// ========== Validation State (missed by sub-agent) ==========
+const BLOCOS_DEF = [
+  { key: 'denticao',   titulo: 'Dentição e Ausências',          campo: 'denticao_ausencias',                     temOdonto: true  },
+  { key: 'reab',       titulo: 'Reabilitações e Implantes',      campo: 'reabilitacoes_implantes',                temOdonto: false },
+  { key: 'endo',       titulo: 'Endodontia e Restaurações',      campo: 'tratamentos_endodonticos_restauracoes',  temOdonto: false },
+  { key: 'osseo',      titulo: 'Avaliação Óssea / Periodontal',  campo: 'avaliacao_ossea_periodontal',            temOdonto: false },
+  { key: 'seios',      titulo: 'Seios Maxilares / Estruturas',   campo: 'seios_maxilares_estruturas_adjacentes',  temOdonto: false },
+  { key: 'impressao',  titulo: 'Impressão Radiográfica',         campo: '_impressao',                             temOdonto: false },
+  { key: 'rec',        titulo: 'Recomendações',                  campo: '_recomendacoes',                         temOdonto: false },
+];
+window.blocosState = {};
+window.blocosOpen = {};
+
 function renderValidacoes(lista) {
   const el = document.getElementById('valList');
   const pendentes = lista.filter(l => precisaValidacao(l));
