@@ -60,15 +60,7 @@ function App(){
     const t=token.trim();
     if(!t){setError('Preencha o token.');return;}
     // Open the Apps Script page with token — this works because it redirects the whole browser
-    setLoading(true);
-      fetch('/api?token='+encodeURIComponent(t))
-        .then(r=>r.json())
-        .then(dp=>{
-          setLoading(false);
-          if(dp.error){setScreen('error');setError(dp);}
-          else{setData(dp);setScreen('dashboard');}
-        })
-        .catch(()=>{setLoading(false);setScreen('error');setError({errorTitle:'Erro',errorMessage:'Falha na conexão. Tente novamente.'});});
+    window.location.href='https://script.google.com/macros/s/AKfycbxy8yktI28t32uD7sxpkv0uUTe6wgNO1ho03XOVnDYkxRWy4fVZ0wEY1zh7O8VhofBLeg/exec?token='+encodeURIComponent(t)
   }
 
   function handleKeyDown(e){if(e.key==='Enter')handleLogin();}
